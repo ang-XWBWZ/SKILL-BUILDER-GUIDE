@@ -1,0 +1,28 @@
+# openai.yaml 模板
+
+用于 standalone use。
+
+## 使用方式
+
+1. 复制本文件到 `skills/{your-skill-name}/agents/openai.yaml`
+2. 替换 `{display_name}`、`{description}`、`{triggers}` 为实际内容
+3. 在 display_name 开头标注模型等级：`L0`/`L1`/`L2`
+
+---
+
+```yaml
+interface:
+  display_name: "L{N} — {project}-{skill-type}"
+  short_description: "L{N} — {一句话描述}"
+  default_prompt: "Use ${project}-{skill-type} to {用途说明}"
+policy:
+  allow_implicit_invocation: false
+triggers:
+  - {触发词1}
+  - {触发词2}
+  - {触发词3}
+  - {触发词4}
+  - {触发词5}
+  - {触发词6}
+  - {触发词7}
+```

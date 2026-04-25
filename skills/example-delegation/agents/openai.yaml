@@ -1,0 +1,17 @@
+interface:
+  display_name: "L1 — example-delegation"
+  short_description: "L1 — 示例模型分治规则。强制L0下放、下放格式、违反代价。"
+  default_prompt: "Use example-delegation to determine which tasks must be delegated to Haiku and how to format delegation commands."
+policy:
+  allow_implicit_invocation: false
+triggers:
+  - 分治规则
+  - 模型下放
+  - L0 执行
+  - Haiku 执行
+  - 主模型约束
+  - 任务分级
+  - 模型路由
+  - 下放格式
+  - 子Agent
+  - 不要自己执行

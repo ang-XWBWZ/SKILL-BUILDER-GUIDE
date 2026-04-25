@@ -1,0 +1,14 @@
+interface:
+  display_name: "L1 — example-dev"
+  short_description: "L1 — 示例项目开发规范。技术栈、代码规范、API规范。"
+  default_prompt: "Use example-dev to understand this project's tech stack, code conventions, and API design standards."
+policy:
+  allow_implicit_invocation: false
+triggers:
+  - 技术栈
+  - 开发规范
+  - 代码规范
+  - API 规范
+  - 依赖版本
+  - 包结构
+  - 命名规范

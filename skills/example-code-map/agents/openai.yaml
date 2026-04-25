@@ -1,0 +1,14 @@
+interface:
+  display_name: "L0 — example-code-map"
+  short_description: "L0 — 示例项目代码地图。文件定位、目录结构、组件导航。"
+  default_prompt: "Use example-code-map to find files, directories, and components in this project."
+policy:
+  allow_implicit_invocation: false
+triggers:
+  - 项目结构
+  - 目录结构
+  - 文件位置
+  - 在哪开发
+  - 组件位置
+  - 页面在哪
+  - 路由映射
