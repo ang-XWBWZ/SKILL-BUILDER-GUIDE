@@ -158,6 +158,9 @@ Skills: "在 {tech-stack} 项目中，按 {规范} 开发 {模块}"
 ---
 name: [skill-name]                        # 必须：与目录名一致
 description: [一句话描述，30-50字]         # 必须：说明用途和触发场景
+status: active                            # 可选：draft | active | deprecated | superseded
+reviewBy: [YYYY-MM-DD]                    # 可选：建议复核日期（过期后验证工具会告警）
+supersededBy: [new-skill-name]            # 可选：仅 superseded 时需要，指向替代技能
 ---
 ```
 
@@ -1473,6 +1476,28 @@ docs(skills): {描述}
 - [ ] **技能声明已通过代码级验证**（13.2 节验证方法）
 - [ ] **CLAUDE.md 中的强制规则和索引是否同步**
 
+### 10.5 生命周期管理
+
+Skill 在创建后可能经历状态变化，建议通过 frontmatter 的 status 字段记录当前状态（见 4.1 节）：
+
+```
+draft → active → deprecated → (移除)
+                  ↓
+             superseded → 指向替代技能
+```
+
+| 状态 | 含义 | 操作 |
+|------|------|------|
+| `draft` | 创建中，未就绪 | 继续完善 |
+| `active` | 正常使用 | 定期复核 |
+| `deprecated` | 不再推荐使用 | 建议迁移到替代方案 |
+| `superseded` | 已被新 Skill 替代 | 配合 `supersededBy` 字段指向替代者 |
+
+**状态变更时机**：
+- 技术栈迁移或模块重构 → 原 Skill 标记 `deprecated`，新 Skill 标记 `active`
+- 发现更好的技能划分方式 → 旧技能标记 `superseded`，通过 `supersededBy` 指向新技能
+- reviewBy 日期到期但内容仍有效 → 更新日期即可，无需变更状态
+
 ---
 
 ---
@@ -1920,25 +1945,27 @@ python scripts/zip_extract.py my-skill.zip ~/.claude/skills/ my-skill
 
 **问题**: 多个技能的触发词重叠，导致不确定调用哪个
 
-**解决原则**:
+**裁决规则**（按优先级从高到低）：
 
-| 优先级 | 技能类型 | 说明 |
-|--------|---------|------|
-| 高 | 流程技能 | workflow 类优先，因为它是入口 |
-| 中 | 地图技能 | code-map 次之，提供位置信息 |
-| 低 | 规范技能 | dev/spec 最后，提供知识 |
+| 优先级 | 条件 | 示例 |
+|--------|------|------|
+| 1 | 项目特定 Skill > 通用 Skill | `myproject-dev` > 全局 `engineering-discipline` |
+| 2 | 声明为 `required` 的规则 > `recommended` | CLAUDE.md 强制规则 > 技能建议 |
+| 3 | 更精确的触发词匹配 > 宽泛匹配 | "新增页面" > "开发" |
+| 4 | active 状态的 Skill > deprecated | 有效 Skill 优先 |
+| 5 | 最近更新的 Skill > 更早的 | 按更新时间裁决 |
 
 **冲突时的处理方法**:
 
 1. **触发词精确度**: 使用更精确的触发词避免歧义
-   - ❌ `开发` → 冲突
+   - ❌ `开发` → 可能触发 dev 或 workflow
    - ✅ `新增页面` → 明确指向 workflow
 
-2. **技能内排序**: 在 openai.yaml 中按优先级排列 triggers
+2. **技能内排序**: 在 openai.yaml 中按具体程度排列 triggers
    - 更具体的触发词放前面
    - 更通用的触发词放后面
 
-3. **互斥配置**: 在 Skill 的 trigger 章节明确说明与其他技能的边界
+3. **跨项目隔离**: 项目级 Skill 放在项目 `skills/` 目录下，全局 Skill 放在 `~/.claude/skills/`，通过目录隔离避免冲突
 
 ### A3. 技能版本管理
 

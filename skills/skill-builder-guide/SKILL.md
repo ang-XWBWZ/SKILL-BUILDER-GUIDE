@@ -1,6 +1,7 @@
 ---
 name: skill-builder-guide
 description: AI Agent Skills 创建方法论。当需要为项目创建技能体系、学习技能模板、理解模型分治或验证技能准确性时触发。
+status: active
 version: 1.0.0
 updatedAt: 2026-04-25
 ---

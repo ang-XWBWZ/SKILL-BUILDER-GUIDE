@@ -1,6 +1,7 @@
 ---
 name: example-dev
 description: 示例项目开发规范。询问技术栈、API规范、代码规范时触发。
+status: active
 version: 1.0.0
 updatedAt: 2026-04-25
 ---

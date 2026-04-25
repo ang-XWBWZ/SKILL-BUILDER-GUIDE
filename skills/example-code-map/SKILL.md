@@ -1,6 +1,7 @@
 ---
 name: example-code-map
 description: 示例项目代码地图。询问文件位置、目录结构、组件导航时触发。
+status: active
 version: 1.0.0
 updatedAt: 2026-04-25
 ---

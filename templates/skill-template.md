@@ -14,6 +14,8 @@
 ---
 name: {project}-{skill-type}
 description: {项目名}{技能用途}。当{触发场景}时触发。
+status: active
+reviewBy: {review-date}
 version: 1.0.0
 updatedAt: {date}
 ---

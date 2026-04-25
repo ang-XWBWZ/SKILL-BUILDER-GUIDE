@@ -1,6 +1,7 @@
 ---
 name: example-delegation
 description: 示例模型分治规则。定义哪些任务必须下放 Haiku、下放格式、主模型不得越界执行的强制约束。
+status: active
 version: 1.0.0
 updatedAt: 2026-04-25
 ---
