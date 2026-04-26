@@ -1255,16 +1255,21 @@ bash scripts/generate-diff-report.sh --id {id} --type {type}
 
 ### 3.3 报告存储
 
+存档目录结构和操作的完整方法论见 `skills/change-model/SKILL.md` 第八、九章（变更存档设计 + 存档流程与工具）。
+
 ```
 docs/
 └── changes/              # 变更报告目录
-    ├── INDEX.md          # 变更索引
+    ├── INDEX.md          # 变更索引（按时间/类型双维度）
     ├── 2026-01-01/      # 按日期组织
-    │   ├── {id}.md      # 完整报告
-    │   └── {id}.diff    # 代码 diff
-    └── templates/        # 报告模板
-        └── change-report.md
+    │   ├── {YYYYMMDD}-01-{描述}.md    # 完整报告
+    │   └── {YYYYMMDD}-02-{描述}.md
+    └── ...
 ```
+
+参考实现脚本：
+- `skills/change-model/scripts/generate-git-report.py` — 从 Git 历史生成报告
+- `skills/change-model/scripts/archive-report.py` — 手动报告归档
 
 ---
 
@@ -1371,7 +1376,7 @@ bash scripts/stats.sh --from {date} --to {date}
 
 变更模型技能是一种结构化的变更文档格式，将代码 diff 转化为 WHY/WHAT/HOW/VALIDATION 四层架构的报告。
 
-**完整模板位置**: `skills/change-model/SKILL.md`
+**完整指南位置**: `skills/change-model/SKILL.md`（主体八~九章 + 附一~附二）
 
 **核心特点**:
 
@@ -1381,17 +1386,32 @@ bash scripts/stats.sh --from {date} --to {date}
 | 因果链追踪 | 变更背景 → 需求 → 影响 → 设计 → 实现 → 验证 |
 | 风险分级 | L0-L3 风险等级定义 |
 | 指南模板 | 提供标准填写模板和通用示例 |
+| 存档体系 | **主体** — 按日期归档 + INDEX.md 双维度索引（第八~九章） |
+| Git 分析 | **附属** — 从提交历史补全变更报告（附一） |
+
+**主流程**: 先写报告 → 变更实现 → 调用链检查 → 测试验证 → 归档存档
+
+**章节导航**:
+
+| 章节 | 定位 | 内容 |
+|------|:----:|------|
+| 一~七 | 主体 | 核心方法论（四层架构、填写规范、调用链检查、通用示例） |
+| 八~九 | **主体** | **变更存档设计 + 存档流程与工具** |
+| 附一 | 附属 | 从 Git 历史生成变更报告（补充历史记录） |
+| 附二 | 附属 | 与 CI/CD 集成（延伸参考） |
 
 **适用场景**:
 
 - 需要生成结构化变更文档
 - 需要追踪变更的因果链
 - 需要评估变更风险和影响
+- 需要归档变更记录、建立可追溯的变更历史
+- 需要从 Git 历史快速生成 Release Notes
 - 创建项目专属的变更报告技能
 
 **使用方式**:
 
-参照 `skills/change-model/SKILL.md` 中的四层架构和方法论，为项目生成专属的变更报告技能。AI 将根据项目实际情况适配模板内容。
+参照 `skills/change-model/SKILL.md` 中的四层架构和方法论，为项目生成专属的变更报告技能。参考实现脚本（`generate-git-report.py`、`archive-report.py`）位于 `skills/change-model/scripts/`，需根据项目实际情况调整后使用。
 
 ### 8.8 分治驱动技能模板
 

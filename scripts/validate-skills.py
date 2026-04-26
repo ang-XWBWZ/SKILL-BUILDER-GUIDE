@@ -103,7 +103,7 @@ def main():
 
         total_skills += 1
         name, errors, warnings = validate_skill(skill_dir)
-        status = "✅" if not errors else "❌"
+        status = "[OK]" if not errors else "[FAIL]"
         print(f"\n{status} {name}")
         for e in errors:
             print(f"  错误: {e}")
@@ -118,12 +118,12 @@ def main():
     print(f"警告数: {len(all_warnings)}")
 
     if all_errors:
-        print("\n❌ 验证未通过，请修复上述错误。")
+        print("\n[FAIL] 验证未通过，请修复上述错误。")
         sys.exit(1)
     elif all_warnings:
         print("\n⚠️ 验证通过但存在警告。")
     else:
-        print("\n✅ 全部通过！")
+        print("\n[OK] 全部通过！")
 
 if __name__ == "__main__":
     main()
