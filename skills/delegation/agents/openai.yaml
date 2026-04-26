@@ -1,0 +1,19 @@
+interface:
+  display_name: "L1 — delegation"
+  short_description: "L1 — 任务拆解与模型路由"
+  default_prompt: "Use delegation skill for task decomposition and model tier routing"
+policy:
+  allow_implicit_invocation: false
+triggers:
+  - 分治
+  - 拆解任务
+  - 模型下放
+  - 模型等级
+  - 模型路由
+  - L0 任务
+  - L1 任务
+  - 派 Haiku
+  - 子Agent
+  - 该不该下放
+  - 任务分级
+  - H-ADMC

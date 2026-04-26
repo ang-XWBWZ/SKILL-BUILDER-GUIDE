@@ -10,12 +10,14 @@
 
 | 技能 | 等级 | 用途 | 说明 |
 |------|:----:|------|------|
+| [delegation](delegation/) | L1 | 任务拆解、模型路由 | **本项目分治中枢** ★ |
 | [change-model](change-model/) | L1 | 变更报告、调用链检查 | **核心驱动模板** ★ |
 | [skill-builder-guide](skill-builder-guide/) | L1 | 技能创建方法论 | 元技能 |
 | [example-dev](example-dev/) | L1 | 开发规范技能模板 | 含分层规范、代码扫描方法 |
 | [example-code-map](example-code-map/) | **L0** | 代码地图技能模板 | 文件定位方法论 |
-| [example-delegation](example-delegation/) | L1 | 分治规则技能模板 | 模型分级路由 |
+| [example-delegation](example-delegation/) | L1 | 分治规则技能模板 | 供其他项目参照 |
 
+> ★ 分治中枢：所有任务入口先经 delegation 判断拆解与路由
 > ★ 核心驱动模板：以 Change Model 四层架构（WHY/WHAT/HOW/VALIDATION）驱动开发流程
 
 ---
@@ -39,6 +41,10 @@
 ## 技能关联
 
 ```
+delegation (分治中枢) ← 任务入口，决定拆解与路由
+    │
+    └─→ 所有 L0 任务下放 Haiku
+
 change-model (变更驱动)
     │
     ├─ WHY   → 需求分析（主模型）

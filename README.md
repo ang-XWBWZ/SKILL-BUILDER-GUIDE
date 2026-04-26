@@ -63,8 +63,9 @@ skill-builder-guide/
 │   └── quick-start.md          ← 5分钟快速入门
 │
 ├── skills/                     ← 技能模板与方法论
+│   ├── delegation/              ← 分治驱动 ★（任务路由中枢）
 │   ├── skill-builder-guide/    ← 技能创建方法论
-│   ├── change-model/           ← 变更模型技能模板 ★
+│   ├── change-model/           ← 变更模型技能模板
 │   ├── example-dev/            ← 开发规范技能模板
 │   ├── example-code-map/       ← 代码地图技能模板 [L0]
 │   └── example-delegation/     ← 分治规则技能模板
@@ -131,6 +132,9 @@ skill-builder-guide/
 需求到达
     │
     ▼
+┌─ delegation：判断任务复杂度，拆解L0子任务
+    │
+    ▼
 WHY: 需求分析（主模型）
     │
     ▼
@@ -141,7 +145,7 @@ HOW: 设计与实现
     │
     ▼
 VALIDATION: 验证
-    ├─ 调用链检查   → change-model §4 (L1)
+    ├─ 调用链检查   → change-model 调用链检查章节 (L1)
     ├─ 测试验证     → 主模型处理
     └─ 生成变更报告 → change-model (L1)
 ```
@@ -152,6 +156,9 @@ VALIDATION: 验证
 创建技能需求
     │
     ▼
+┌─ delegation：拆解扫描任务，L0信息收集派Haiku
+    │
+    ▼
 skill-builder-guide (L1)
     ├─ 确定技能类型和数量
     ├─ 选择模板（8种）
@@ -160,10 +167,11 @@ skill-builder-guide (L1)
     │
     ▼
 参照模板生成专属技能
+    ├─ delegation        → 分治驱动技能
     ├─ change-model      → 变更报告技能
     ├─ example-dev       → 开发规范技能
     ├─ example-code-map  → 代码地图技能
-    └─ example-delegation → 分治驱动技能
+    └─ example-delegation → 分治规则模板
 ```
 
 ---

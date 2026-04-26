@@ -22,6 +22,7 @@ updatedAt: 2026-04-26
 
 ## 关联技能
 
+- [分治驱动](../delegation/SKILL.md) — 本项目实际使用的分治技能（完整实现参考）
 - [开发规范](../example-dev/SKILL.md) — L0 信息查阅场景
 - [代码地图](../example-code-map/SKILL.md) — L0 文件定位场景
 

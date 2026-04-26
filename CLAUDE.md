@@ -18,11 +18,12 @@ AI Agent Skills 创建指南与模板体系。
 
 | 技能 | 等级 | 触发场景 | 用途 |
 |------|:----:|----------|------|
+| [delegation](skills/delegation/) | L1 | 拆解任务、模型路由、L0下放 | **分治驱动（本项目的任务路由）** |
 | [skill-builder-guide](skills/skill-builder-guide/) | L1 | 创建技能、技能模板、模型分级 | 技能创建方法论 |
 | [change-model](skills/change-model/) | L1 | 变更报告、DiffLog、风险评估 | 变更模型技能模板 |
-| [example-dev](skills/example-dev/) | L1 | 技术栈、代码规范、API规范 | 开发规范示例 |
-| [example-code-map](skills/example-code-map/) | L0 | 文件位置、组件定位、目录结构 | 代码地图示例 |
-| [example-delegation](skills/example-delegation/) | L1 | 分治规则、模型下放、L0任务 | 分治规则示例 |
+| [example-dev](skills/example-dev/) | L1 | 技术栈、代码规范、API规范 | 开发规范模板 |
+| [example-code-map](skills/example-code-map/) | L0 | 文件位置、组件定位、目录结构 | 代码地图模板 |
+| [example-delegation](skills/example-delegation/) | L1 | 分治规则模板、模型下放 | 分治规则模板（供其他项目参考） |
 
 ---
 
@@ -86,6 +87,10 @@ AI Agent Skills 创建指南与模板体系。
 ## 技能关联关系
 
 ```
+delegation (分治驱动) ← 本项目任务路由中枢
+    │
+    └─→ 所有 L0 任务强制下放 Haiku
+
 skill-builder-guide (技能创建)
     │
     ├─→ change-model (变更报告)
@@ -96,9 +101,9 @@ skill-builder-guide (技能创建)
     │       │
     │       └─→ example-code-map (文件定位) [L0]
     │
-    └─→ example-delegation (分治规则)
+    └─→ example-delegation (分治模板)
             │
-            └─→ 强制L0下放
+            └─→ 供其他项目参照创建分治规则
 ```
 
 ---
@@ -109,11 +114,12 @@ skill-builder-guide (技能创建)
 
 | 意图 | 触发技能 | 示例 |
 |------|----------|------|
+| 拆任务/路由 | delegation | "拆解任务"、"L0下放"、"用什么模型" |
 | 创建技能 | skill-builder-guide | "创建一个技能"、"技能模板" |
 | 生成变更报告 | change-model | "生成DiffLog"、"变更影响分析" |
 | 查技术栈 | example-dev | "用什么框架"、"API规范" |
 | 查文件位置 | example-code-map | "接口入口在哪"、"目录结构" |
-| 分治规则 | example-delegation | "L0任务"、"模型下放" |
+| 分治模板 | example-delegation | "分治规则模板"、"下放格式" |
 
 ### 模型等级速查
 
