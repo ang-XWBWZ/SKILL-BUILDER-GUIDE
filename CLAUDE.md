@@ -20,7 +20,7 @@ AI Agent Skills 创建指南与模板体系。
 |------|:----:|----------|------|
 | [delegation](skills/delegation/) | L1 | 拆解任务、模型路由、L0下放 | **分治驱动（本项目的任务路由）** |
 | [skill-builder-guide](skills/skill-builder-guide/) | L1 | 创建技能、技能模板、模型分级 | 技能创建方法论 |
-| [change-model](skills/change-model/) | L1 | 变更报告、DiffLog、风险评估 | 变更模型技能模板 |
+| [change-model](skills/change-model/) | L1 | 变更报告、DiffLog、归档存档、Git分析 | 变更模型技能模板（含存档体系） |
 | [example-dev](skills/example-dev/) | L1 | 技术栈、代码规范、API规范 | 开发规范模板 |
 | [example-code-map](skills/example-code-map/) | L0 | 文件位置、组件定位、目录结构 | 代码地图模板 |
 | [example-delegation](skills/example-delegation/) | L1 | 分治规则模板、模型下放 | 分治规则模板（供其他项目参考） |
@@ -54,7 +54,8 @@ AI Agent Skills 创建指南与模板体系。
 │  VALIDATION: 验证                                        │
 │  ├─ 调用链检查       → change-model 调用链检查章节 (L1)   │
 │  ├─ 测试验证         → 主模型处理                         │
-│  └─ 生成变更报告     → change-model (L1)                 │
+│  ├─ 生成变更报告     → change-model (L1)                 │
+│  └─ 归档存档         → change-model 第八~九章 (L1)        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -116,7 +117,7 @@ skill-builder-guide (技能创建)
 |------|----------|------|
 | 拆任务/路由 | delegation | "拆解任务"、"L0下放"、"用什么模型" |
 | 创建技能 | skill-builder-guide | "创建一个技能"、"技能模板" |
-| 生成变更报告 | change-model | "生成DiffLog"、"变更影响分析" |
+| 生成变更报告 | change-model | "生成DiffLog"、"变更影响分析"、"归档变更" |
 | 查技术栈 | example-dev | "用什么框架"、"API规范" |
 | 查文件位置 | example-code-map | "接口入口在哪"、"目录结构" |
 | 分治模板 | example-delegation | "分治规则模板"、"下放格式" |
@@ -139,4 +140,5 @@ skill-builder-guide (技能创建)
 | `SKILL-BUILDER-GUIDE.md` | 核心指南（18章节） |
 | `templates/skill-template.md` | 技能模板 |
 | `templates/change-model-template.md` | 变更模型模板 |
+| `skills/change-model/scripts/` | 变更存档 + Git分析参考实现 |
 | `scripts/validate-skills.py` | 技能验证工具 |

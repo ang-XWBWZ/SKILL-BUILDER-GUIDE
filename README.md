@@ -65,7 +65,8 @@ skill-builder-guide/
 ├── skills/                     ← 技能模板与方法论
 │   ├── delegation/              ← 分治驱动 ★（任务路由中枢）
 │   ├── skill-builder-guide/    ← 技能创建方法论
-│   ├── change-model/           ← 变更模型技能模板
+│   ├── change-model/           ← 变更模型技能模板（含存档 + Git分析）
+│   │   └── scripts/             ← 参考实现脚本
 │   ├── example-dev/            ← 开发规范技能模板
 │   ├── example-code-map/       ← 代码地图技能模板 [L0]
 │   └── example-delegation/     ← 分治规则技能模板
@@ -118,7 +119,8 @@ skill-builder-guide/
 │  WHAT   — 影响与风险                 │
 │  HOW    — 设计与实现                 │
 │  VALIDATION — 验证与交付             │
-│    └─ 调用链检查（测试前）           │
+│    ├─ 调用链检查（测试前）           │
+│    └─ 📦 归档存档 → INDEX.md        │
 └─────────────────────────────────────┘
 ```
 
