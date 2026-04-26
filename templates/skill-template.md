@@ -1,12 +1,13 @@
 # Skill Builder Guide — 技能模板
 
-用于 standalone use（复制后直接编辑）。
+> **定位**：本模板用于**指导创建**项目专属技能，不是直接复制使用的成品。使用时替换 `{placeholder}` 为项目实际内容，按需增删章节。
 
 ## 使用方式
 
-1. 复制本文件到 `skills/{your-skill-name}/SKILL.md`
-2. 替换 `{project}` 占位符为实际项目名
-3. 按需增删章节
+1. 参照本模板结构，理解各章节的目的
+2. 将 `{project}`、`{skill-type}` 等占位符替换为项目实际名称
+3. 根据项目需要增删章节，不用照搬
+4. 保存到 `skills/{your-skill-name}/SKILL.md`
 
 ---
 

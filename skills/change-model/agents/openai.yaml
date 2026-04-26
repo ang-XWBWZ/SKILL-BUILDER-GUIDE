@@ -1,0 +1,15 @@
+interface:
+  display_name: "L1 — Change Model"
+  short_description: "L1 — 变更模型技能模板。将代码变更转化为结构化变更报告，支持 WHY/WHAT/HOW/VALIDATION 四层架构。"
+  default_prompt: "使用 change-model 技能生成结构化变更报告。按照 WHY→WHAT→HOW→VALIDATION 四层架构组织内容。"
+policy:
+  allow_implicit_invocation: false
+triggers:
+  - 变更报告
+  - DiffLog
+  - Change Model
+  - 变更文档
+  - Release Notes
+  - 变更影响
+  - 风险评估
+  - 回滚方案
