@@ -41,17 +41,20 @@
 
 ```
 skill-builder-guide [meta]
-  │
-  ├─→ delegation [planning] ← 任务路由中枢
-  │     │
-  │     ├─→ change-model [functional]
-  │     │     │
-  │     │     ├─→ example-dev [atomic, L1]
-  │     │     └─→ example-code-map [atomic, L0]
-  │     │
-  │     └─→ 所有 L0 任务强制下放 Haiku
-  │
-  └─→ example-delegation [atomic] ← 供其他项目参照
+  ├─→ delegation [planning]
+  ├─→ change-model [functional]
+  ├─→ example-dev [atomic]
+  ├─→ example-code-map [atomic]
+  └─→ example-delegation [atomic]
+
+delegation [planning]
+  ├─→ change-model [functional]
+  ├─→ example-dev [atomic]
+  └─→ example-code-map [atomic]
+
+change-model [functional]
+  ├─→ example-dev [atomic]
+  └─→ example-code-map [atomic]
 ```
 
 ---

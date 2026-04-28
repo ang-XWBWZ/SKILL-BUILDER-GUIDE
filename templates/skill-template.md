@@ -14,11 +14,28 @@
 ```markdown
 ---
 name: {project}-{skill-type}
-description: {项目名}{技能用途}。当{触发场景}时触发。
-status: active
-reviewBy: {review-date}
+description: >-
+  {项目名}{技能用途}。当{触发场景}时触发。
+model_tier: {L0|L1|L2|L3}
+skill_tier: {meta|planning|functional|atomic}
+composes: []
+composed_by: []
+context_budget:
+  l1_metadata: 100
+  l2_body: 3000
+  l3_references: 5000
 version: 1.0.0
-updatedAt: {date}
+status: active
+review_by: {YYYY-MM-DD}
+trust_level: internal
+requires_network: false
+requires_file_write: false
+compatibility: universal
+allowed_tools: Read Grep Glob
+evolution:
+  usage_count: 0
+  last_corrections: []
+  stale_markers: []
 ---
 
 # {项目名}{技能名}

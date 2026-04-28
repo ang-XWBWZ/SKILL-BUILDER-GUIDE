@@ -20,7 +20,7 @@
 | name 字段 | 在 frontmatter 中存在 |
 | status 字段 | 值为 draft/active/deprecated/superseded |
 | superseded 的 supersededBy | status=superseded 时必须存在 |
-| reviewBy 日期 | 格式 YYYY-MM-DD |
+| review_by 日期 | 格式 YYYY-MM-DD（兼容旧格式 reviewBy） |
 | triggers 数量 | 5-15 个 |
 | YAML 语法 | 无解析错误 |
 | short_description 含等级标注 | 包含 L0/L1/L2/L3 |
@@ -31,7 +31,7 @@
 |--------|---------|
 | 双轴等级一致性 | L0 技能不得包含推理语言关键词 |
 | 组合图闭合 | A.composes 包含 B → B.composed_by 必须包含 A |
-| 上下文预算 | l1_metadata ≤150, l2_body ≤5000, l3_references ≤10000 |
+| 上下文预算 | l1_metadata ≤150, l2_body ≤5000, l3_references ≤20000 |
 | 层级约束 | atomic 不能 composes 其他 atomic |
 | 命名一致性 | composes/composed_by 中的名称必须匹配目标 SKILL.md 的 name 字段 |
 | display_name 对齐 | openai.yaml display_name 必须与 SKILL.md 中的 model_tier+skill_tier 一致 |

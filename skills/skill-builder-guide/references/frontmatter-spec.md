@@ -54,7 +54,7 @@ description: 提供项目开发规范和编码风格参考
 |------|------|------|------|
 | `context_budget.l1_metadata` | int | ≤150 | name + description 的 token 预算 |
 | `context_budget.l2_body` | int | ≤5000 (硬约束) | SKILL.md 正文 token 上限 |
-| `context_budget.l3_references` | int | ≤10000 | references/ 目录总 token 上限 |
+| `context_budget.l3_references` | int | ≤20000 | references/ 目录总 token 上限。meta/planning/functional 层技能可适当放宽，atomic 层建议 ≤5000 |
 
 **验证规则**：脚本可对 L2 body 做 token 估算（中文字符/1.5 + 英文单词/1.3）。
 

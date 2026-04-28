@@ -100,7 +100,7 @@ SKILL-BUILDER-GUIDE/
 │   ├── check-skill-health.py       ← Tier 2 健康度扫描
 │   └── package-skill.py            ← 技能打包
 │
-└── .github/workflows/
+└── workflows/
     └── validate.yml                ← CI: 自动验证
 ```
 

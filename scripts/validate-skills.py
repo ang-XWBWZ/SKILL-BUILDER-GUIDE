@@ -5,6 +5,9 @@ import os
 import sys
 import yaml  # requires: pip install pyyaml
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 def validate_skill(skill_dir):
     """Validate a single skill directory."""
     errors = []
@@ -26,13 +29,15 @@ def validate_skill(skill_dir):
         # 检查 frontmatter 分隔符
         if not content.startswith("---"):
             errors.append("SKILL.md: 缺少 frontmatter 起始分隔符 ---")
+        fm = content[:2000]  # v2.0 frontmatter 较长，扩大搜索范围
+
         # 检查必要字段
-        if "name:" not in content[:500]:
+        if "name:" not in fm:
             errors.append("SKILL.md: 缺少 name 字段")
         # 检查状态字段
-        if "status:" in content[:500]:
+        if "status:" in fm:
             status_match = None
-            for line in content[:500].split("\n"):
+            for line in fm.split("\n"):
                 if line.strip().startswith("status:"):
                     status_match = line.strip()
                     break
@@ -41,23 +46,31 @@ def validate_skill(skill_dir):
                 valid_statuses = ["draft", "active", "deprecated", "superseded"]
                 if status_value not in valid_statuses:
                     warnings.append(f"SKILL.md: status 值 '{status_value}' 无效，有效值: {', '.join(valid_statuses)}")
-                if status_value == "superseded" and "supersededBy:" not in content[:500]:
+                if status_value == "superseded" and "supersededBy:" not in fm:
                     warnings.append("SKILL.md: status 为 superseded 但缺少 supersededBy 字段")
         else:
             warnings.append("SKILL.md: 建议添加 status 字段 (draft|active|deprecated|superseded)")
 
-        # 检查 reviewBy 是否过期
-        if "reviewBy:" in content[:500]:
+        # 检查 review_by (snake_case, v2.0) 或 reviewBy (camelCase, v1.0) 是否过期
+        review_key = None
+        review_date_str = None
+        if "review_by:" in fm:
+            review_key = "review_by"
+        elif "reviewBy:" in fm:
+            review_key = "reviewBy"
+        if review_key:
             from datetime import datetime
-            for line in content[:500].split("\n"):
-                if line.strip().startswith("reviewBy:"):
-                    date_str = line.strip().split(":", 1)[1].strip()
-                    try:
-                        review_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                        if review_date < datetime.now().date():
-                            warnings.append(f"SKILL.md: reviewBy ({date_str}) 已过期，建议复核技能内容")
-                    except ValueError:
-                        warnings.append(f"SKILL.md: reviewBy 日期格式无效，应为 YYYY-MM-DD")
+            for line in fm.split("\n"):
+                if line.strip().startswith(review_key + ":"):
+                    review_date_str = line.strip().split(":", 1)[1].strip()
+                    break
+            if review_date_str:
+                try:
+                    review_date = datetime.strptime(review_date_str, "%Y-%m-%d").date()
+                    if review_date < datetime.now().date():
+                        warnings.append(f"SKILL.md: {review_key} ({review_date_str}) 已过期，建议复核技能内容")
+                except ValueError:
+                    warnings.append(f"SKILL.md: {review_key} 日期格式无效，应为 YYYY-MM-DD")
 
     # 3. 检查 openai.yaml
     yaml_path = os.path.join(skill_dir, "agents/openai.yaml")
@@ -121,7 +134,7 @@ def main():
         print("\n[FAIL] 验证未通过，请修复上述错误。")
         sys.exit(1)
     elif all_warnings:
-        print("\n⚠️ 验证通过但存在警告。")
+        print("\n[WARN] 验证通过但存在警告。")
     else:
         print("\n[OK] 全部通过！")
 

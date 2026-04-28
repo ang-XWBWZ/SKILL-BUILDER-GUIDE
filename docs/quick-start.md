@@ -195,16 +195,15 @@ Change Model：需求 → WHY → WHAT → HOW → VALIDATION → 上线
 
 ## 技能调用速查
 
-> **说明**：下方 `{project}-xxx` 表示你项目专属的技能名称（如 `myapp-dev`）。
+> **说明**：每个技能有两个维度——**执行层**（谁执行，L0-L3）和**组合层**（在技能图中的位置，meta/planning/functional/atomic）。两轴正交。详见项目 README。
 
-| 阶段 | 触发技能 | 等级 | 用途 |
-|------|----------|:----:|------|
-| WHY | {project}-change-model | L1 | 需求分析、判断逻辑 |
-| WHAT | {project}-change-model | L1 | 影响分析、风险评估 |
-| HOW | {project}-dev | L1 | 技术栈、规范查询 |
-| HOW | {project}-code-map | **L0** | 文件定位 [派Haiku] |
-| VALIDATION | {project}-change-model（调用链检查章节） | L1 | 数据流验证 |
-| VALIDATION | {project}-change-model | L1 | 变更报告生成 |
+| 阶段 | 触发技能 | 执行层 | 组合层 | 用途 |
+|------|----------|:------:|:------:|------|
+| WHY | {project}-change-model | L1 | functional | 需求分析、判断逻辑 |
+| WHAT | {project}-change-model | L1 | functional | 影响分析、风险评估 |
+| HOW | {project}-dev | L1 | atomic | 技术栈、规范查询 |
+| HOW | {project}-code-map | **L0** | atomic | 文件定位 [派Haiku] |
+| VALIDATION | {project}-change-model | L1 | functional | 调用链检查 + 变更报告 |
 
 ---
 
@@ -233,11 +232,11 @@ Change Model：需求 → WHY → WHAT → HOW → VALIDATION → 上线
 
 ## 项目技能
 
-| 技能 | 等级 | 用途 |
-|------|:----:|------|
-| {project}-dev | L1 | 开发规范、编码风格 |
-| {project}-code-map | **L0** | 文件定位 [派Haiku] |
-| {project}-change-model | L1 | 变更报告、调用链检查 |
+| 技能 | 执行层 | 组合层 | 用途 |
+|------|:------:|:------:|------|
+| {project}-dev | L1 | atomic | 开发规范、编码风格 |
+| {project}-code-map | **L0** | atomic | 文件定位 [派Haiku] |
+| {project}-change-model | L1 | functional | 变更报告、调用链检查 |
 ```
 
 3. **开始使用**
