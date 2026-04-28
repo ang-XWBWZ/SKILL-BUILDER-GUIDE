@@ -1,272 +1,146 @@
 # Skill Builder Guide
 
-> **为 AI Agent 创建专业技能的标准化指南与模板体系**
+> **Agent-Native Skill Architecture v2.0** — 从人读文档到 agent 可执行架构
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-8A2BE2)](https://claude.ai/code)
 
 ---
 
 ## 这是什么？
 
-**Skill Builder Guide** 是一套完整的指南、模板和工具，帮助开发者为任意项目创建专业的 **AI Agent Skills**（技能体系）。
+**Skill Builder Guide** 是一套用于构建 AI Agent Skills 的指南、模板和工具体系。基于 2026 年五项关键理论（Progressive Disclosure / SkillX / MCE / SSL / Context-as-Budget）重新设计为 **agent 可执行架构**。
 
-Skills 是 Claude Code 等 AI Agent 的结构化知识库。有了 Skills，AI 可以：
+### 三个核心概念
 
-- **精确理解项目结构** — 知道文件在哪、如何命名、遵循什么规范
-- **一致性执行开发任务** — 按统一流程编码、测试、部署
-- **自动路由到合适模型** — L0 机械任务派 Haiku，L2 推理任务用 Sonnet/Opus
+| # | 概念 | 一句话 |
+|:--:|------|--------|
+| 1 | **双轴分级** | 每个技能同时在执行轴（L0-L3，谁执行）和组合轴（meta/planning/functional/atomic，在哪层）上定义 |
+| 2 | **四层渐进披露** | L1元数据永远加载 → L2指令体触发时加载 → L3参考按需加载 → L4脚本零token进上下文 |
+| 3 | **三态进化** | 运行时顺手收集信号（~10t/次）→ 离线Haiku扫描分析 → 用户手动触发技能重生 |
 
-**没有 Skills 的时候**：
+---
 
-| 问题 | 后果 |
-|------|------|
-| AI 每次重新理解项目 | 输出不稳定 |
-| 手动描述上下文 | 效率低 |
-| 模型不分级处理 | token 浪费 5-15x |
+## 架构全景
+
+```
+CLAUDE.md (~500t)              ← 路由器，不是百科全书
+  │
+  ├─ delegation [planning, L1] ← 编排中枢
+  │   └─ composes: change-model + example-dev + example-code-map
+  │
+  ├─ skill-builder-guide [meta, L1] ← 元技能: 创建其他技能
+  │   └─ composes: delegation + change-model + 所有atomic
+  │
+  ├─ change-model [functional, L1] ← 变更报告 WHY/WHAT/HOW/VALIDATION
+  │   └─ composes: example-dev + example-code-map
+  │
+  ├─ example-dev [atomic, L1]     ← 技术栈 / 规范
+  ├─ example-code-map [atomic, L0] ← 文件定位 (必须派Haiku)
+  └─ example-delegation [atomic, L1] ← 分治模板
+
+每个技能:
+  SKILL.md          ← L2: 核心指令体 (≤5000 tokens)
+  agents/openai.yaml ← L1: 触发元数据
+  references/        ← L3: 深入参考 (按需加载)
+  scripts/           ← L4: 可执行脚本 (零token进上下文)
+```
 
 ---
 
 ## 快速开始
 
-> **项目定位**：本指南用于**指导创建项目专属技能**，不是直接复制使用的成品。
+> 5 分钟入门：[docs/quick-start.md](docs/quick-start.md)
 
-### 核心理念
+### 为你的项目创建专属技能
 
 ```
-Change Model 四层架构（驱动开发流程）：
-
-WHY   → 变更背景与需求
-WHAT  → 影响与风险
-HOW   → 设计与实现
-VALIDATION → 调用链检查 + 测试验证
+在 Claude Code 中:
+"为我的 {项目名} 创建技能体系"
 ```
 
-### 使用方式
+skill-builder-guide (meta) 自动执行五阶段管线：分析项目 → 扫描代码(L0 Haiku) → 生成技能 → 验证 → 确认。
 
-1. **阅读快速入门**：[docs/quick-start.md](docs/quick-start.md)
-2. **参照模板结构**：为本指南提供的技能模板和方法论
-3. **生成专属技能**：AI 根据你的项目代码生成专属技能文档
+### 启动技能健康检查
+
+```bash
+python scripts/check-skill-health.py skills/     # Tier 2 离线扫描
+python scripts/validate-skills.py skills/        # V1+V2 格式+结构验证
+```
 
 ---
 
 ## 项目结构
 
 ```
-skill-builder-guide/
-├── SKILL-BUILDER-GUIDE.md      ← 核心指南（18章节 + 附录）
-├── README.md                   ← 本文件
-├── CLAUDE.md                   ← 项目技能入口
-├── LICENSE
+SKILL-BUILDER-GUIDE/
+├── CLAUDE.md                       ← 极简路由表 (~500 tokens)
+├── README.md                       ← 本文件
+├── SKILL-BUILDER-GUIDE.md          ← 核心指南 (人类参考，18章)
 │
-├── docs/                       ← 文档
-│   └── quick-start.md          ← 5分钟快速入门
+├── docs/
+│   ├── quick-start.md              ← 5分钟入门
+│   └── changes/                    ← 变更报告存档
 │
-├── skills/                     ← 技能模板与方法论
-│   ├── delegation/              ← 分治驱动 ★（任务路由中枢）
-│   ├── skill-builder-guide/    ← 技能创建方法论
-│   ├── change-model/           ← 变更模型技能模板（含存档 + Git分析）
-│   │   └── scripts/             ← 参考实现脚本
-│   ├── example-dev/            ← 开发规范技能模板
-│   ├── example-code-map/       ← 代码地图技能模板 [L0]
-│   └── example-delegation/     ← 分治规则技能模板
+├── skills/                         ← 技能体系 (6个)
+│   ├── delegation/                 ← [planning] 分治中枢
+│   ├── skill-builder-guide/        ← [meta] 技能创建管线
+│   ├── change-model/               ← [functional] 变更报告
+│   ├── example-dev/                ← [atomic, L1] 开发规范模板
+│   ├── example-code-map/           ← [atomic, L0] 代码地图模板
+│   ├── example-delegation/         ← [atomic, L1] 分治规则模板
+│   └── README.md                   ← 技能索引 + 组合关系图
 │
-├── templates/                  ← 可复用模板
-│   ├── skill-template.md       ← 技能模板
-│   └── change-model-template.md ← 变更模型模板
+├── templates/                      ← 可复用模板
+│   ├── skill-template.md
+│   ├── change-model-template.md
+│   └── openai-template.yaml
 │
-├── scripts/                    ← 工具脚本
-│   ├── validate-skills.py      ← 验证技能一致性
-│   └── package-skill.py        ← 打包技能为 .zip
+├── scripts/                        ← 工具脚本
+│   ├── validate-skills.py          ← V1+V2 格式+结构验证
+│   ├── check-skill-health.py       ← Tier 2 健康度扫描
+│   └── package-skill.py            ← 技能打包
 │
 └── .github/workflows/
-    └── validate.yml            ← CI: 自动验证技能健康度
-```
-
-> ★ 标记为核心驱动技能，建议优先掌握
-
----
-
-## 核心概念
-
-### 八大技能类型
-
-| 类型 | 等级 | 用途 | 典型问题 |
-|------|:----:|------|---------|
-| **规范技能** (dev) | L1 | 技术栈、代码规范、API规范 | "用什么技术？怎么组织？" |
-| **地图技能** (code-map) | **L0** | 文件定位、组件导航 | "在哪写？哪个文件？" |
-| **流程技能** (workflow) | L1 | 开发步骤、检查清单 | "按什么顺序？从哪开始？" |
-| **脚本技能** (scripts) | L0 | 部署回滚、日常运维 | "怎么运行？怎么部署？" |
-| **调用链技能** (call-chain) | L1 | 数据流追踪、类型验证 | "数据怎么传？终点在哪？" |
-| **变更日志技能** (diffs) | L1 | 变更记录、历史追踪 | "改了什么？为什么改？" |
-| **变更模型技能** (change-model) | L1 | 结构化变更报告 | "为什么改？影响什么？怎么验证？" |
-| **分治技能** (delegation) | L1 | 模型路由、L0 强制下放 | "谁来做？该不该派 Haiku？" |
-
-### 模型分级路由
-
-| 等级 | 模型 | 任务类型 | 必须下放？ |
-|:----:|------|---------|:----------:|
-| **L0** | Haiku（轻量） | 文件查找、信息查阅、命令执行 | **是** |
-| **L1** | Sonnet（标准） | 有界实现、单模块修改 | 否 |
-| **L2** | Sonnet/Opus（高能力） | 根因诊断、跨模块实现 | 否 |
-| **L3** | Opus（顶级） | 架构决策、安全审计 | 否 |
-
-### 变更模型四层架构
-
-```
-┌─────────────────────────────────────┐
-│  WHY    — 变更背景与需求             │
-│  WHAT   — 影响与风险                 │
-│  HOW    — 设计与实现                 │
-│  VALIDATION — 验证与交付             │
-│    ├─ 调用链检查（测试前）           │
-│    └─ 📦 归档存档 → INDEX.md        │
-└─────────────────────────────────────┘
+    └── validate.yml                ← CI: 自动验证
 ```
 
 ---
 
-## 技能调用流程
+## 技能双轴分级速查
 
-### 变更开发流程
-
-```
-需求到达
-    │
-    ▼
-┌─ delegation：判断任务复杂度，拆解L0子任务
-    │
-    ▼
-WHY: 需求分析（主模型）
-    │
-    ▼
-HOW: 设计与实现
-    ├─ 查技术栈/规范 → example-dev (L1)
-    ├─ 查文件位置   → example-code-map (L0) [派Haiku]
-    └─ 编码实现     → 主模型处理
-    │
-    ▼
-VALIDATION: 验证
-    ├─ 调用链检查   → change-model 调用链检查章节 (L1)
-    ├─ 测试验证     → 主模型处理
-    └─ 生成变更报告 → change-model (L1)
-```
-
-### 技能创建流程
-
-```
-创建技能需求
-    │
-    ▼
-┌─ delegation：拆解扫描任务，L0信息收集派Haiku
-    │
-    ▼
-skill-builder-guide (L1)
-    ├─ 确定技能类型和数量
-    ├─ 选择模板（8种）
-    ├─ 标注模型等级
-    └─ 验证技能准确性
-    │
-    ▼
-参照模板生成专属技能
-    ├─ delegation        → 分治驱动技能
-    ├─ change-model      → 变更报告技能
-    ├─ example-dev       → 开发规范技能
-    ├─ example-code-map  → 代码地图技能
-    └─ example-delegation → 分治规则模板
-```
-
----
-
-## 示例：创建你的第一个技能
-
-### 1. 目录结构
-
-```bash
-mkdir -p myproject/skills/myproject-dev/agents
-```
-
-### 2. SKILL.md
-
-```markdown
----
-name: myproject-dev
-description: MyProject 开发规范。询问技术栈、API规范时触发。
-status: active
-version: 1.0.0
----
-
-## 触发条件
-
-- 询问技术栈、依赖版本
-- 询问 API 规范、代码规范
-
-## 关联技能
-
-- [代码地图](../myproject-code-map/SKILL.md)
-
----
-
-## 一、技术栈
-
-| 依赖 | 版本 | 说明 |
-|------|------|------|
-| Spring Boot | 3.2.0 | Web 框架 |
-```
-
-### 3. agents/openai.yaml
-
-```yaml
-interface:
-  display_name: "L1 — myproject-dev"
-  short_description: "L1 — 开发规范查询"
-  default_prompt: "Use myproject-dev skill"
-policy:
-  allow_implicit_invocation: false
-triggers:
-  - 开发规范
-  - 技术栈
-  - API规范
-```
-
----
-
-## 谁在用这个？
-
-| 用户类型 | 使用场景 |
-|----------|----------|
-| **独立开发者** | 为自己的项目创建 Skills，减少重复描述 |
-| **团队** | 统一 AI 协作规范，新人快速上手 |
-| **开源项目** | 为贡献者提供 AI 友好的开发指引 |
-| **AI Agent 开发者** | 构建自定义技能生态 |
+| 技能 | 执行层 | 组合层 | 用途 |
+|------|:------:|:------:|------|
+| delegation | L1 | planning | 拆解任务、模型路由、子Agent编排 |
+| skill-builder-guide | L1 | meta | 技能创建五阶段管线 |
+| change-model | L1 | functional | WHY/WHAT/HOW/VALIDATION 变更报告 |
+| example-dev | L1 | atomic | 技术栈规范、分层架构、命名惯例 |
+| example-code-map | **L0** | atomic | 文件定位、目录结构 (**派Haiku**) |
+| example-delegation | L1 | atomic | 分治规则模板、下放格式 |
 
 ---
 
 ## Roadmap
 
-- [x] 核心指南 v1.0（18章节）
-- [x] 8 种技能模板
-- [x] 模型分级路由（L0-L3）
-- [x] H-ADMC 主从编排模式（拆解→派发→执行→整合→检查）
-- [x] 技能验证协议
-- [x] 变更模型技能（WHY/WHAT/HOW/VALIDATION）
-- [x] 调用链检查方法论
+- [x] 双轴分级模型 (model_tier × skill_tier)
+- [x] 四层渐进披露 (L1→L2→L3→L4)
+- [x] CLAUDE.md 极简化 (3000t → 500t)
+- [x] skill-builder-guide 元技能管线 (五阶段)
+- [x] 三态技能进化 (Tier1信号收集 → Tier2离线扫描 → Tier3重生管线)
+- [x] V1+V2 技能验证 + 健康度检查
+- [ ] V3 语义验证（代码级事实核查，即将支持）
 - [ ] 技能自动生成 CLI 工具
-- [ ] VS Code 扩展支持
-- [ ] 技能市场（社区共享）
-- [ ] 多 Agent 框架适配（Cursor、Copilot）
+- [ ] 多 Agent 框架适配
 
 ---
 
 ## 贡献
 
-欢迎提交 PR 和 Issue！
-
-### 开发
-
 ```bash
-# 验证所有示例技能
+# 验证所有技能
 python scripts/validate-skills.py skills/
+
+# 健康度检查
+python scripts/check-skill-health.py skills/
 
 # 打包发布
 python scripts/package-skill.py skills/skill-builder-guide
