@@ -1,7 +1,7 @@
 interface:
-  display_name: "L1 — Skill Builder Guide"
-  short_description: "L1 — AI Agent Skills 创建方法论。技能模板、模型分级、验证协议、打包分发。"
-  default_prompt: "Use skill-builder-guide to create or evaluate AI Agent Skills for a project."
+  display_name: "L1-meta — Skill Builder Guide"
+  short_description: "L1-meta — AI Agent Skills 创建管线。分析→扫描→生成→验证→确认。双轴分级、技能模板、验证协议、打包分发。"
+  default_prompt: "Use skill-builder-guide to create or evaluate AI Agent Skills for a project. This is a META skill — its output is new skill files."
 policy:
   allow_implicit_invocation: false
 triggers:
@@ -15,3 +15,6 @@ triggers:
   - 技能目录
   - skill builder
   - openai.yaml
+  - frontmatter
+  - 双轴分级
+  - 生成专属技能

@@ -1,6 +1,6 @@
 interface:
-  display_name: "L1 — example-dev"
-  short_description: "L1 — 示例项目开发规范。技术栈、代码规范、API规范。"
+  display_name: "L1-atomic — example-dev"
+  short_description: "L1-atomic — 示例项目开发规范。技术栈、代码规范、API规范、分层架构、命名约定。被 functional/planning/meta 层技能编排调用。"
   default_prompt: "Use example-dev to understand this project's tech stack, code conventions, and API design standards."
 policy:
   allow_implicit_invocation: false

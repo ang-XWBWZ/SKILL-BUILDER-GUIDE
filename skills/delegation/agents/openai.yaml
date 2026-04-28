@@ -1,6 +1,6 @@
 interface:
-  display_name: "L1 — delegation"
-  short_description: "L1 — 任务拆解与模型路由"
+  display_name: "L1-planning — delegation"
+  short_description: "L1-planning — 任务拆解与模型路由。定义双轴分级（执行轴+组合轴）、拆解判断标准、子Agent编排。"
   default_prompt: "Use delegation skill for task decomposition and model tier routing"
 policy:
   allow_implicit_invocation: false
@@ -17,3 +17,4 @@ triggers:
   - 该不该下放
   - 任务分级
   - H-ADMC
+  - 双轴分级

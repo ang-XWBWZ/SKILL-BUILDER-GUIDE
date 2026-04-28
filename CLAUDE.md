@@ -2,8 +2,7 @@
 
 AI Agent Skills 创建指南与模板体系。
 
-> **项目定位**：本指南用于**指导创建项目专属技能**，不是直接复制使用的成品。
->
+> **定位**：本指南用于**指导创建项目专属技能**，不是直接复制使用的成品。
 > **快速入门**：[docs/quick-start.md](docs/quick-start.md) — 5分钟掌握 Change Model 驱动开发
 
 ---
@@ -14,122 +13,16 @@ AI Agent Skills 创建指南与模板体系。
 
 ---
 
-## 项目技能
+## 技能路由
 
-| 技能 | 等级 | 触发场景 | 用途 |
-|------|:----:|----------|------|
-| [delegation](skills/delegation/) | L1 | 拆解任务、模型路由、L0下放 | **分治驱动（本项目的任务路由）** |
-| [skill-builder-guide](skills/skill-builder-guide/) | L1 | 创建技能、技能模板、模型分级 | 技能创建方法论 |
-| [change-model](skills/change-model/) | L1 | 变更报告、DiffLog、归档存档、Git分析 | 变更模型技能模板（含存档体系） |
-| [example-dev](skills/example-dev/) | L1 | 技术栈、代码规范、API规范 | 开发规范模板 |
-| [example-code-map](skills/example-code-map/) | L0 | 文件位置、组件定位、目录结构 | 代码地图模板 |
-| [example-delegation](skills/example-delegation/) | L1 | 分治规则模板、模型下放 | 分治规则模板（供其他项目参考） |
-
----
-
-## 技能调用流程
-
-### 变更开发流程
-
-```
-需求到达
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│  WHY: 需求分析                                           │
-│  ├─ 理解背景、目标、约束                                  │
-│  └─ 触发: 无特定技能，主模型直接处理                       │
-└─────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│  HOW: 设计与实现                                         │
-│  ├─ 查技术栈/规范     → example-dev (L1)                 │
-│  ├─ 查文件位置       → example-code-map (L0) [派Haiku]   │
-│  └─ 编码实现         → 主模型处理                         │
-└─────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│  VALIDATION: 验证                                        │
-│  ├─ 调用链检查       → change-model 调用链检查章节 (L1)   │
-│  ├─ 测试验证         → 主模型处理                         │
-│  ├─ 生成变更报告     → change-model (L1)                 │
-│  └─ 归档存档         → change-model 第八~九章 (L1)        │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 技能创建流程
-
-```
-创建技能需求
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│  skill-builder-guide (L1)                               │
-│  ├─ 确定技能类型和数量                                   │
-│  ├─ 选择模板（8种）                                      │
-│  ├─ 标注模型等级（L0/L1/L2/L3）                          │
-│  └─ 验证技能准确性                                       │
-└─────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│  参照模板生成专属技能                                    │
-│  ├─ change-model    → 变更报告技能                       │
-│  ├─ example-dev     → 开发规范技能                       │
-│  ├─ example-code-map → 代码地图技能                      │
-│  └─ example-delegation → 分治驱动技能                    │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 技能关联关系
-
-```
-delegation (分治驱动) ← 本项目任务路由中枢
-    │
-    └─→ 所有 L0 任务强制下放 Haiku
-
-skill-builder-guide (技能创建)
-    │
-    ├─→ change-model (变更报告)
-    │       │
-    │       └─→ 调用链检查 (测试前验证)
-    │
-    ├─→ example-dev (开发规范)
-    │       │
-    │       └─→ example-code-map (文件定位) [L0]
-    │
-    └─→ example-delegation (分治模板)
-            │
-            └─→ 供其他项目参照创建分治规则
-```
-
----
-
-## 快速参考
-
-### 常用触发词
-
-| 意图 | 触发技能 | 示例 |
-|------|----------|------|
-| 拆任务/路由 | delegation | "拆解任务"、"L0下放"、"用什么模型" |
-| 创建技能 | skill-builder-guide | "创建一个技能"、"技能模板" |
-| 生成变更报告 | change-model | "生成DiffLog"、"变更影响分析"、"归档变更" |
-| 查技术栈 | example-dev | "用什么框架"、"API规范" |
-| 查文件位置 | example-code-map | "接口入口在哪"、"目录结构" |
-| 分治模板 | example-delegation | "分治规则模板"、"下放格式" |
-
-### 模型等级速查
-
-| 等级 | 执行者 | 任务类型 |
-|:----:|--------|----------|
-| L0 | **Haiku** | 文件查找、信息查阅、命令执行 |
-| L1 | Sonnet | 单模块修改、规范查询、窄范围搜索 |
-| L2 | Sonnet/Opus | 跨模块实现、根因诊断 |
-| L3 | Opus | 架构决策、系统重设计 |
+| 技能 | 执行层 | 组合层 | 触发场景 |
+|------|:------:|:------:|----------|
+| [delegation](skills/delegation/) | L1 | planning | 拆解任务、模型路由、L0下放 |
+| [skill-builder-guide](skills/skill-builder-guide/) | L1 | **meta** | 创建技能、技能模板、模型分级 |
+| [change-model](skills/change-model/) | L1 | functional | 变更报告、DiffLog、归档存档、Git分析 |
+| [example-dev](skills/example-dev/) | L1 | atomic | 技术栈、代码规范、API规范 |
+| [example-code-map](skills/example-code-map/) | **L0** | atomic | 文件位置、组件定位、目录结构 |
+| [example-delegation](skills/example-delegation/) | L1 | atomic | 分治规则模板、下放格式 |
 
 ---
 
@@ -137,8 +30,7 @@ skill-builder-guide (技能创建)
 
 | 文件 | 说明 |
 |------|------|
-| `SKILL-BUILDER-GUIDE.md` | 核心指南（18章节） |
+| `docs/quick-start.md` | 5分钟快速入门 |
 | `templates/skill-template.md` | 技能模板 |
 | `templates/change-model-template.md` | 变更模型模板 |
-| `skills/change-model/scripts/` | 变更存档 + Git分析参考实现 |
 | `scripts/validate-skills.py` | 技能验证工具 |

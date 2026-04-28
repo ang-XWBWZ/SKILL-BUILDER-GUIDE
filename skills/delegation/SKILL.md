@@ -1,18 +1,43 @@
 ---
 name: delegation
-description: 分治驱动技能。定义任务拆解、模型分级路由、子任务派发的原则与方法。当需要拆解复杂任务、确定模型等级、派发子Agent时触发。
+description: >-
+  分治驱动技能。定义任务拆解、模型分级路由、子任务派发的原则与方法。
+  当需要拆解复杂任务、确定模型等级、派发子Agent时触发。
+model_tier: L1
+skill_tier: planning
+composes:
+  - functional: change-model
+  - atomic: example-dev
+  - atomic: example-code-map
+composed_by:
+  - meta: skill-builder-guide
+context_budget:
+  l1_metadata: 105
+  l2_body: 3200
+  l3_references: 6000
+version: 1.1.0
 status: active
-version: 1.0.0
-updatedAt: 2026-04-26
+review_by: 2026-07-28
+trust_level: internal
+requires_network: false
+requires_file_write: false
+compatibility: universal
+allowed_tools: Agent Bash Read Grep Glob
+evolution:
+  usage_count: 0
+  last_corrections: []
+  stale_markers: []
 ---
 
 # 分治驱动 — 任务拆解与模型路由
 
-> **定位**：本技能是 SKILL-BUILDER-GUIDE 项目的分治规则。定义任务拆解原则和模型路由方法，指导主模型何时拆解、如何派发。
+> **定位**: Planning 层技能——不直接执行业务任务，而是决定任务如何拆解、路由到哪个模型、如何派发子Agent。
 >
-> **模板**：如需为其他项目创建分治技能，参照 [example-delegation](../example-delegation/SKILL.md)。
+> **组合关系**: 本技能编排 [code-map](../example-code-map/SKILL.md) 和 [dev](../example-dev/SKILL.md) 作为 L0 信息收集的 atomic 技能。
 >
-> **原理来源**：基于 H-ADMC（拆解→派发→执行→整合→检查）主从编排模式，精简适配为本项目的实用规则。
+> **模板参考**: 为其他项目创建分治技能时，参照 [example-delegation](../example-delegation/SKILL.md)。
+>
+> **深入参考**: 升级策略细节见 [references/upgrade-escalation.md](references/upgrade-escalation.md)。
 
 ## 触发条件
 
@@ -24,10 +49,9 @@ updatedAt: 2026-04-26
 
 ## 关联技能
 
-- [技能构建指南](../skill-builder-guide/SKILL.md) — 技能创建方法论
-- [example-delegation](../example-delegation/SKILL.md) — 分治规则模板（供其他项目参考）
-- 模型分级路由详见 `SKILL-BUILDER-GUIDE.md` 第十一章
-- H-ADMC 编排模式详见 `SKILL-BUILDER-GUIDE.md` 第十二章
+- [技能构建指南](../skill-builder-guide/SKILL.md) — meta 层技能创建
+- [变更模型](../change-model/SKILL.md) — functional 层变更驱动
+- [分治规则模板](../example-delegation/SKILL.md) — atomic 层参考
 
 ---
 
@@ -51,7 +75,17 @@ updatedAt: 2026-04-26
 
 ---
 
-## 二、模型分级路由
+## 二、双轴分级
+
+每个任务在**两个独立轴**上评估：
+
+| | 执行轴 (model_tier) | 组合轴 (skill_tier) |
+|--|-------------------|---------------------|
+| **问题** | 谁来执行？ | 在组合图中处于什么位置？ |
+| **决策依据** | 认知负载 | 依赖关系 |
+| **值域** | L0 / L1 / L2 / L3 | meta / planning / functional / atomic |
+
+### 执行轴：模型分级路由
 
 | 等级 | 复杂度 | 推荐模型 | 做什么 | 下放建议 |
 |:----:|--------|----------|------|----------|
@@ -62,19 +96,14 @@ updatedAt: 2026-04-26
 
 **L0 下放的核心理由**：L0 是机械操作，主模型执行消耗 5-15x token，与轻量模型结果等价。
 
-### 升级策略
+### 组合轴：技能层级
 
-当同一任务出现以下情况时，**升级至推理/顶级模型处理**：
-
-| 触发条件 | 说明 |
-|---------|------|
-| 用户多次不满意 | 同一任务经 2 轮以上修正仍未通过 |
-| 工作返工 | 相同代码/模块被反复修改，问题未收敛 |
-
-**升级方式**：将以下关键信息打包提供给推理/顶级模型——
-- 原始需求与用户反馈记录
-- 已尝试的方案及失败原因
-- 当前代码状态与阻塞点
+| Tier | 职责 | 本体系中的技能 |
+|------|------|--------------|
+| **meta** | 创建其他技能 | skill-builder-guide |
+| **planning** | 编排与路由 | delegation |
+| **functional** | 可复用的多步子例程 | change-model |
+| **atomic** | 单一工具/查表 | dev, code-map, delegation-template |
 
 ---
 
@@ -161,8 +190,60 @@ updatedAt: 2026-04-26
 2. 识别冲突或缺口
 3. 决策：继续 / 重新拆解 / 完成
 
+**主模型不得替代子Agent进行局部推理。**
+
+### 派发命令标准格式
+
+```
+Agent(
+  description: "3-5词描述任务",
+  model: "haiku",
+  prompt: """
+    【任务】具体要做什么
+    【文件】需要读取的路径列表
+    【输出要求】按 Conclusion/Basis/Uncertainty 格式返回
+  """
+)
+```
+
 ---
 
-## 七、模型等级
+## 七、升级策略
 
-**L1 — Sonnet**：规则解释与编排，需根据任务特征判断拆解和路由策略。
+当同一任务出现以下情况时，**升级至推理/顶级模型处理**：
+
+| 触发条件 | 阈值 | 动作 |
+|---------|------|------|
+| 用户多次不满意 | 同一任务 ≥2 轮修正未通过 | 打包上下文，提交顶级模型 |
+| 工作返工 | 同段代码反复修改 ≥3 次，问题未收敛 | 停止修改，重新分析根因 |
+| 问题未收敛 | 3 轮对话后仍未缩小问题范围 | 升级至更高级模型重新诊断 |
+
+**升级信息包**：原始需求 + 已尝试方案及失败原因 + 当前阻塞点 + 已排除假设。
+
+详见 [references/upgrade-escalation.md](references/upgrade-escalation.md)。
+
+---
+
+## 八、技能进化信号收集（Tier 1）
+
+**每个任务结束时，更新所用技能的 `evolution` 字段**。这是零推理成本的 metadata 更新——不触发 LLM 调用，不加载额外上下文。
+
+```
+任务结束:
+  skill.evolution.usage_count += 1
+
+  IF 用户有纠正:
+    skill.evolution.last_corrections.append("YYYY-MM-DD: [一句话]")
+    (只保留最近 3 条)
+
+  IF 发现技能内容与实际不符:
+    skill.evolution.stale_markers.append("[一句话]")
+```
+
+Tier 2 离线扫描器（`scripts/check-skill-health.py`）定期分析这些信号。Tier 3 由用户显式触发"优化这个技能"进入五阶段重生管线。
+
+---
+
+## 九、模型等级
+
+**L1 — Sonnet / planning tier**：规则解释与编排，需根据任务特征判断拆解和路由策略。

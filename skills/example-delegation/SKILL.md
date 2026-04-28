@@ -1,30 +1,50 @@
 ---
 name: example-delegation
-description: 分治规则技能模板。用于指导创建项目专属的分治规则。定义哪些任务必须下放 Haiku、下放格式、主模型约束。
+description: >-
+  分治规则技能模板。用于指导创建项目专属的分治规则。
+  定义哪些任务必须下放 Haiku、下放格式、子Agent输出规范。
+model_tier: L1
+skill_tier: atomic
+composes: []
+composed_by:
+  - meta: skill-builder-guide
+context_budget:
+  l1_metadata: 100
+  l2_body: 1500
+  l3_references: 3000
+version: 1.1.0
 status: active
-version: 1.0.0
-updatedAt: 2026-04-26
+review_by: 2026-07-28
+trust_level: internal
+requires_network: false
+requires_file_write: false
+compatibility: universal
+allowed_tools: Agent Read Bash
+evolution:
+  usage_count: 0
+  last_corrections: []
+  stale_markers: []
 ---
 
 # 分治规则技能模板
 
-> **定位**：本技能是创建项目专属分治规则的**指南模板**，不是直接复制使用的成品。
+> **定位**: Atomic 层 / L1 执行层——供其他项目参照创建项目级分治规则的**指南模板**。被 [skill-builder-guide](../skill-builder-guide/SKILL.md) (meta) 编排调用。
 >
-> **使用方式**：参照本模板的规则结构，为你的项目生成专属的分治规则。
+> **完整实现**: 本项目实际使用的分治技能见 [delegation](../delegation/SKILL.md) (planning 层)。
 >
-> **模板特点**：本文中列出的 L0 任务清单、下放格式、输出规范为通用框架。实际使用时，需根据项目技术栈和目录结构扩充具体的 L0 任务清单（如"查 {项目框架} 版本"、"读 {项目配置文件名}"）。
+> **深入参考**: 升级策略细节见 [references/upgrade-strategy.md](references/upgrade-strategy.md)。
 
 ## 触发条件
 
-- 创建分治规则技能
-- 定义 L0 任务下放规则
+- 创建分治规则技能 / 定义 L0 任务下放规则
 - 询问"这个任务该不该下放"
+- 需要分治规则模板参考
 
 ## 关联技能
 
-- [分治驱动](../delegation/SKILL.md) — 本项目实际使用的分治技能（完整实现参考）
+- [分治驱动](../delegation/SKILL.md) — 本项目实际使用的 planning 层分治技能
 - [开发规范](../example-dev/SKILL.md) — L0 信息查阅场景
-- [代码地图](../example-code-map/SKILL.md) — L0 文件定位场景
+- [代码地图](../example-code-map/SKILL.md) — L0 文件定位场景 [L0]
 
 ---
 
@@ -39,6 +59,8 @@ updatedAt: 2026-04-26
 | 文件查找 | 查文件在哪、目录结构 | code-map |
 | 信息查阅 | 查版本号、API 路由 | dev |
 | 命令执行 | 部署、打包、服务启停 | scripts |
+| 静态追踪 | 画数据流图、核对API清单 | code-map / dev |
+| 机械编辑 | 修改变量名、更新版本号 | (直接操作) |
 
 ## 三、下放标准格式
 
@@ -57,14 +79,14 @@ Agent(
 ## 四、子Agent输出格式
 
 ```
-Conclusion: (一句话)
-Basis: (具体证据)
-Uncertainty: (局限或风险)
+结论 (Conclusion):   一句话回答分配的目标
+依据 (Basis):        具体证据、观察、推理路径
+不确定性 (Uncertainty): 风险、缺失信息、失败模式（无则写"无"）
 ```
 
-## 五、升级/兜底策略
+主模型收到后只做三件事：提取结论 → 识别冲突 → 决策。
 
-当任务执行陷入循环或用户持续不满意时，**升级至推理/顶级模型处理**：
+## 五、升级/兜底策略
 
 | 触发条件 | 阈值 | 动作 |
 |---------|------|------|
@@ -73,6 +95,8 @@ Uncertainty: (局限或风险)
 
 **升级信息包**：原始需求 + 已尝试方案及失败原因 + 当前阻塞点 + 已排除假设。
 
+详见 [references/upgrade-strategy.md](references/upgrade-strategy.md)。
+
 ## 六、模型等级
 
-**L1 — Sonnet**：规则解释与编排，需推理判断。
+**L1 — Sonnet / atomic tier**：规则解释与编排，需推理判断。本技能为模板参考，实际执行参考 [delegation](../delegation/SKILL.md)。

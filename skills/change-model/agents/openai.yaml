@@ -1,6 +1,6 @@
 interface:
-  display_name: "L1 — Change Model"
-  short_description: "L1 — 变更模型技能模板。将代码变更转化为结构化变更报告（WHY/WHAT/HOW/VALIDATION），支持存档归档、从 Git 历史自动生成报告。"
+  display_name: "L1-functional — Change Model"
+  short_description: "L1-functional — 变更模型技能模板。将代码变更转化为结构化变更报告（WHY/WHAT/HOW/VALIDATION），含调用链检查、存档归档、Git自动分析。"
   default_prompt: "使用 change-model 技能生成结构化变更报告。按照 WHY→WHAT→HOW→VALIDATION 四层架构组织内容。"
 policy:
   allow_implicit_invocation: false

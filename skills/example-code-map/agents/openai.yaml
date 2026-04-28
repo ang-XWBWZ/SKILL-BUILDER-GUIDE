@@ -1,7 +1,7 @@
 interface:
-  display_name: "L0 — example-code-map"
-  short_description: "L0 — 示例项目代码地图。文件定位、目录结构、组件导航。"
-  default_prompt: "Use example-code-map to find files, directories, and components in this project."
+  display_name: "L0-atomic — example-code-map"
+  short_description: "L0-atomic — 示例项目代码地图。文件定位、目录结构、组件导航。纯查表技能，必须由 Haiku 执行。"
+  default_prompt: "Use example-code-map to find files, directories, and components in this project. This is an L0 skill — delegate to Haiku."
 policy:
   allow_implicit_invocation: false
 triggers:

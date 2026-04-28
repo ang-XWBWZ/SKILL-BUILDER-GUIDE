@@ -1,6 +1,6 @@
 interface:
-  display_name: "L1 — example-delegation"
-  short_description: "L1 — 示例模型分治规则。强制L0下放、下放格式、违反代价。"
+  display_name: "L1-atomic — example-delegation"
+  short_description: "L1-atomic — 示例模型分治规则。强制L0下放、下放格式、子Agent输出规范。供其他项目参照创建分治规则。"
   default_prompt: "Use example-delegation to determine which tasks must be delegated to Haiku and how to format delegation commands."
 policy:
   allow_implicit_invocation: false
