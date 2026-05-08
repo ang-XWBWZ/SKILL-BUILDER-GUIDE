@@ -1,264 +1,273 @@
-# 5分钟快速入门
+# 5-Minute Quick Start
 
-以 **Change Model** 为驱动的 AI Agent 开发流程。
-
----
-
-## 核心理念
-
-```
-传统开发：需求 → 编码 → 测试 → 上线
-            ↓
-        过程不可追溯，变更难以理解
-
-Change Model：需求 → WHY → WHAT → HOW → VALIDATION → 上线
-                  ↓      ↓      ↓       ↓
-               背景   影响   设计   验证（调用链检查）
-                  ↓
-              结构化变更报告，因果链完整
-```
+AI Agent development workflow driven by **Change Model**.
 
 ---
 
-## 快速开始
+## Core Concept
 
-### 场景：为你的项目添加一个"按条件筛选"功能
+```
+Traditional: Requirements → Code → Test → Deploy
+                ↓
+           Process is untraceable, changes hard to understand
 
-> **阅读提示**：以下是一个**演示 Change Model 工作流程**的通用示例。`{placeholder}` 均需替换为你项目的实际内容。重点理解**四层分析的方法**，而非照搬示例文本。
+Change Model: Requirements → WHY → WHAT → HOW → VALIDATION → Deploy
+                    ↓      ↓      ↓       ↓
+                 Context  Impact  Design  Verify (call-chain check)
+                    ↓
+              Structured change report, complete causal chain
+```
 
 ---
 
-### Step 1：WHY — 变更背景与需求（30秒）
+## Quick Start
 
-**AI 提示词**：
+### Scenario: Add a "filter by condition" feature to your project
+
+> **Reading note**: This is a **generic example demonstrating the Change Model workflow**. Replace `{placeholder}` with your project's actual content. Focus on understanding the **four-layer analysis method**, not copying the example text verbatim.
+
+---
+
+### Step 1: WHY — Change Context & Requirements (30s)
+
+**AI Prompt**:
 
 ```
-使用 change-model 技能分析以下需求：
+Use the change-model skill to analyze the following requirement:
 
-需求：{你的查询接口}需要支持按 {你的筛选维度} 筛选，当前只能返回全部结果
-目标：新增可选的 {你的筛选参数}，支持 {你的取值范围} 过滤
-约束：不传 {你的筛选参数} 时行为不变，保持向后兼容
+Requirement: {your query endpoint} needs to support filtering by {your filter dimension}.
+Currently, it only returns all results.
+Goal: Add an optional {your filter parameter} to support {your value range} filtering.
+Constraint: Behavior unchanged when {your filter parameter} is not passed. Maintain backward compatibility.
 ```
 
-**输出**：
+**Output**:
 
 ```markdown
-## 变更背景
+## Change Context
 
-| 要素 | 说明 |
+| Element | Description |
 |------|------|
-| 需求来源 | {需求方} |
-| 触发原因 | 无法按 {筛选维度} 筛选 |
-| 期望目标 | 支持 {筛选参数} 过滤 |
+| Requirement source | {requester} |
+| Trigger reason | Cannot filter by {filter dimension} |
+| Desired outcome | Support {filter parameter} filtering |
 
-## 判断逻辑
+## Decision Logic
 
-输入: {必填参数}（必填）, {可选参数}（可选）
+Input: {required_param} (required), {optional_param} (optional)
 
-判断条件:
-- {可选参数} 有值 → 返回匹配结果
-- {可选参数} 为空 → 返回全部结果
+Conditions:
+- {optional_param} has value → return matching results
+- {optional_param} empty → return all results
 
-输出: {结果列表}
+Output: {result_list}
 ```
 
 ---
 
-### Step 2：WHAT — 影响与风险（30秒）
+### Step 2: WHAT — Impact & Risk (30s)
 
-**AI 提示词**：
+**AI Prompt**:
 
 ```
-继续使用 change-model 分析影响和风险
+Continue using change-model to analyze impact and risk
 ```
 
-**输出**：
+**Output**:
 
 ```markdown
-## 影响分析
+## Impact Analysis
 
-| 维度 | 影响说明 | 程度 |
+| Dimension | Impact Description | Severity |
 |------|----------|:----:|
-| 上游调用方 | 新增可选参数，不传时行为不变 | 无 |
-| 数据库 | {表名} 只读查询 | — |
+| Upstream callers | New optional parameter, behavior unchanged when omitted | None |
+| Database | {table_name} read-only query | — |
 
-## 风险评估
+## Risk Assessment
 
-| 风险项 | 级别 | 说明 | 缓解措施 |
+| Risk | Level | Description | Mitigation |
 |--------|:----:|------|----------|
-| 兼容性 | L0 | 新增可选参数 | 已验证不传时行为不变 |
+| Compatibility | L0 | New optional parameter | Verified behavior unchanged when omitted |
 ```
 
 ---
 
-### Step 3：HOW — 设计与实现（2分钟）
+### Step 3: HOW — Design & Implementation (2 min)
 
-**AI 提示词**：
+**AI Prompt**:
 
 ```
-使用 {project}-dev 技能查询项目技术栈和规范
-使用 {project}-code-map 技能定位需要修改的文件
+Use {project}-dev skill to query project tech stack and standards
+Use {project}-code-map skill to locate files that need modification
 
-然后生成调用链路和变更文件清单
+Then generate the call chain and change file checklist
 ```
 
-**输出**：
+**Output**:
 
 ```markdown
-## 调用链路
+## Call Chain
 
-调用方
-  │ {请求方式} {接口路径}?{必填参数}=xxx[&{可选参数}=xxx]
+Caller
+  │ {method} {endpoint}?{required}=xxx[&{optional}=xxx]
   ▼
-接口层 ({入口组件})
-  │ 参数校验 → 调用业务层
+API Layer ({entry_component})
+  │ Parameter validation → calls service layer
   ▼
-业务层 ({业务组件})
-  │ 业务逻辑：{可选参数}有值时追加过滤条件
+Service Layer ({service_component})
+  │ Business logic: append filter when {optional} has value
   ▼
-数据层 ({数据组件})
-  │ {查询语句，含可选条件拼接}
+Data Layer ({data_component})
+  │ {query statement with optional condition}
   ▼
-数据库
+Database
 
-## 变更文件清单
+## Change File Checklist
 
-| 序号 | 操作 | 文件路径 | 变更说明 |
+| # | Action | File Path | Change Description |
 |:----:|:----:|----------|----------|
-| 1 | ✏️ | `{入参定义文件}` | 新增 {可选参数} 字段 |
-| 2 | ✏️ | `{业务层文件}` | 追加过滤逻辑 |
-| 3 | ✏️ | `{数据层文件}` | 查询增加可选条件 |
+| 1 | ✏️ | `{input_definition_file}` | Add {optional} field |
+| 2 | ✏️ | `{service_file}` | Append filter logic |
+| 3 | ✏️ | `{data_file}` | Add optional query condition |
 ```
 
-**编码实现**（伪代码）：
+**Implementation** (pseudocode):
 
 ```
-入参结构 {
-    {必填参数}: {类型}   // 必填，有校验
-    {可选参数}: {类型}   // 可选
+Input struct {
+    {required}: {Type}   // Required, validated
+    {optional}: {Type}   // Optional
 }
 
-业务方法({入参结构} 入参):
-    如果 入参.{可选参数} 不为空:
-        追加过滤条件({可选参数})
-    返回 数据层查询(入参)
+ServiceMethod({Input} input):
+    If input.{optional} is not empty:
+        AppendFilter({optional})
+    Return DataLayer.Query(input)
 ```
 
 ---
 
-### Step 4：VALIDATION — 验证与交付（1分钟）
+### Step 4: VALIDATION — Verify & Deliver (1 min)
 
-**AI 提示词**：
+**AI Prompt**:
 
 ```
-使用 change-model 进行调用链检查，然后生成测试用例
+Use change-model to perform call-chain check, then generate test cases
 ```
 
-**输出**：
+**Output**:
 
 ```markdown
-## 调用链检查
+## Call-Chain Check
 
-| 检查项 | 状态 | 说明 |
+| Check Item | Status | Description |
 |--------|:----:|------|
-| 入口验证 | ✅ | {必填参数} 必填校验生效 |
-| 类型检查 | ✅ | {可选参数} 类型匹配，可为空 |
-| 最终调用 | ✅ | 查询条件正确拼接 |
+| Entry validation | ✅ | {required} required validation active |
+| Type check | ✅ | {optional} type matches, nullable |
+| Final call | ✅ | Query conditions correctly assembled |
 
-## 测试验证
+## Test Verification
 
-| # | 场景 | 入参 | 预期结果 | 判定 |
+| # | Scenario | Input | Expected | Result |
 |:-:|------|------|----------|:---:|
-| 1 | 不传可选参数 | {必填参数}=xxx | 返回全部结果 | ✅ |
-| 2 | 传可选参数 | {必填参数}=xxx&{可选参数}=yyy | 仅返回匹配结果 | ✅ |
+| 1 | No optional param | {required}=xxx | Return all results | ✅ |
+| 2 | With optional param | {required}=xxx&{optional}=yyy | Return matching only | ✅ |
 
-## 回滚方案
+## Rollback Plan
 
-移除 {可选参数} 相关代码即可。
+Remove the {optional} parameter code.
 ```
 
 ---
 
-## 你得到了什么？
+## What You Get
 
-| 产出 | 价值 |
+| Output | Value |
 |------|------|
-| **变更背景文档** | 明确"为什么改"，可追溯 |
-| **影响风险分析** | 提前识别问题，降低风险 |
-| **调用链路图** | 新人快速理解数据流 |
-| **变更文件清单** | 一眼看出改了什么 |
-| **调用链检查** | 测试前保证链路正确 |
-| **测试用例** | 验证点明确，可执行 |
-| **回滚方案** | 出问题能快速恢复 |
+| **Change context doc** | Clear "why changed", traceable |
+| **Impact/risk analysis** | Identify problems early, reduce risk |
+| **Call chain diagram** | Newcomers quickly understand data flow |
+| **Change file checklist** | See what changed at a glance |
+| **Call-chain check** | Ensure correctness before testing |
+| **Test cases** | Clear verification points, executable |
+| **Rollback plan** | Fast recovery if issues arise |
 
 ---
 
-## 技能调用速查
+## Skill Call Quick Reference
 
-> **说明**：每个技能有两个维度——**执行层**（谁执行，L0-L3）和**组合层**（在技能图中的位置，meta/planning/functional/atomic）。两轴正交。详见项目 README。
+> **Note**: Each skill has two dimensions — **execution tier** (who executes, L0-L3) and **composition tier** (position in the skill graph, meta/planning/functional/atomic). The two axes are orthogonal. See project README for details.
 
-| 阶段 | 触发技能 | 执行层 | 组合层 | 用途 |
+| Phase | Skill | Execution | Composition | Purpose |
 |------|----------|:------:|:------:|------|
-| WHY | {project}-change-model | L1 | functional | 需求分析、判断逻辑 |
-| WHAT | {project}-change-model | L1 | functional | 影响分析、风险评估 |
-| HOW | {project}-dev | L1 | atomic | 技术栈、规范查询 |
-| HOW | {project}-code-map | **L0** | atomic | 文件定位 [派Haiku] |
-| VALIDATION | {project}-change-model | L1 | functional | 调用链检查 + 变更报告 |
+| WHY | {project}-change-model | L1 | functional | Requirements analysis, decision logic |
+| WHAT | {project}-change-model | L1 | functional | Impact analysis, risk assessment |
+| HOW | {project}-dev | L1 | atomic | Tech stack, standards lookup |
+| HOW | {project}-code-map | **L0** | atomic | File location [delegate to Haiku] |
+| VALIDATION | {project}-change-model | L1 | functional | Call-chain check + change report |
 
 ---
 
-## 下一步
+## Next Steps
 
-1. **参照本指南的模板，为你的项目生成专属技能**
+1. **Generate project-specific skills using the templates in this guide**
 
 ```
-在 Claude Code 中输入：
-"参照 skills/example-dev/SKILL.md 模板结构，扫描我的项目代码，
- 生成专属的 {项目名}-dev 开发规范技能"
+In Claude Code:
+"Using the skills/example-dev/SKILL.md template structure, scan my project code
+ and generate a project-specific {project}-dev development standards skill"
 
-"参照 skills/example-code-map/SKILL.md 模板结构，分析我的项目目录，
- 生成专属的 {项目名}-code-map 代码地图技能"
+"Using the skills/example-code-map/SKILL.md template structure, analyze my project
+ directory and generate a project-specific {project}-code-map code map skill"
 
-"参照 skills/change-model/SKILL.md 模板结构，适配我的项目技术栈，
- 生成专属的 {项目名}-change-model 变更报告技能"
+"Using the skills/change-model/SKILL.md template structure, adapt to my project's
+ tech stack and generate a project-specific {project}-change-model change report skill"
 ```
 
-2. **创建 CLAUDE.md 集成入口**
+2. **Generate skills to `.claude/skills/` (auto-loaded)**
+
+> Skills generated to `.claude/skills/` are auto-discovered by Claude Code and support `/skill-name` invocation.
+
+3. **Create CLAUDE.md (optional — skills are already auto-loaded)**
+
+With auto-loaded skills, CLAUDE.md only needs mandatory delegation rules and common commands. The skill index is documentation only:
 
 ```markdown
-## 强制分治规则
+## Mandatory Delegation Rules
 
-主模型不得执行 L0 任务。文件操作必须派 Haiku。
+Main model must not execute L0 tasks. File operations must delegate to Haiku.
 
-## 项目技能
+## Available Skills
 
-| 技能 | 执行层 | 组合层 | 用途 |
+> Auto-loaded from `.claude/skills/`, supports `/skill-name` invocation.
+
+| Skill | Execution | Composition | Purpose |
 |------|:------:|:------:|------|
-| {project}-dev | L1 | atomic | 开发规范、编码风格 |
-| {project}-code-map | **L0** | atomic | 文件定位 [派Haiku] |
-| {project}-change-model | L1 | functional | 变更报告、调用链检查 |
+| {project}-dev | L1 | atomic | Dev standards, coding style |
+| {project}-code-map | **L0** | atomic | File location [delegate to Haiku] |
+| {project}-change-model | L1 | functional | Change reports, call-chain checks |
 ```
 
-3. **开始使用**
+4. **Start using**
 
 ```
-使用 {project}-change-model 分析以下需求：{你的需求描述}
+Use {project}-change-model to analyze the following requirement: {your requirement description}
 ```
 
 ---
 
-## 常见问题
+## FAQ
 
-### Q: 为什么调用链检查要在测试前做？
+### Q: Why do call-chain checks before testing?
 
-测试只能验证"预期输入的正确性"，调用链检查验证"数据流的完整性"。如果链路断裂或类型不匹配，测试根本跑不起来。
+Testing only verifies "correctness of expected inputs". Call-chain checking verifies "data flow integrity". If the chain is broken or types don't match, tests won't even run.
 
-### Q: L0 任务为什么要派 Haiku？
+### Q: Why delegate L0 tasks to Haiku?
 
-L0 是机械操作（文件查找、信息查阅），主模型处理消耗 5-15x token，结果等价。派 Haiku 节省成本。
+L0 tasks are mechanical operations (file lookup, info query). Main model processing costs 5-15x more tokens for equivalent results. Delegating to Haiku saves cost.
 
-### Q: 变更报告有什么用？
+### Q: What are change reports useful for?
 
-1. **新人理解** — 快速了解"为什么改、改了什么"
-2. **回滚依据** — 出问题知道删什么
-3. **AI 上下文** — 下次 AI 能理解历史变更意图
+1. **Newcomer understanding** — Quickly understand "why changed, what changed"
+2. **Rollback reference** — Know what to remove if issues arise
+3. **AI context** — AI understands historical change intent for future sessions

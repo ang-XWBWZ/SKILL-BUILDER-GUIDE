@@ -1,1701 +1,420 @@
-# Agent Skills 创建指南 v1.0
+# Agent Skills Creation Guide v2.1 — Live
 
-本文档用于指导为任意项目创建专用 Agent Skills 体系。阅读本指南后，应能为任何技术栈的项目创建出专业、完整的技能集合。
+Methodology and execution pipeline for creating Claude Code project-specific skill systems.
 
----
-
-## 目录
-
-1. [概念与价值](#一概念与价值)
-2. [技能数量规划](#二技能数量规划)
-3. [目录结构规范](#三目录结构规范)
-4. [frontmatter 元数据规范](#四frontmatter-元数据规范)
-5. [SKILL.md 标准章节](#五skillmd-标准章节)
-6. [agents/openai.yaml 规范](#六agentsopenaiyaml-规范)
-7. [README.md 结构](#七-readmemd-结构)
-8. [技能模板](#八技能模板)
-   - 8.1 规范技能模板
-   - 8.2 地图技能模板
-   - 8.3 流程技能模板
-   - 8.4 调用链技能模板
-   - 8.5 脚本技能模板
-   - 8.6 变更日志技能模板
-   - 8.7 变更模型技能模板
-   - 8.8 分治驱动技能模板
-9. [创建步骤与验收标准](#九创建步骤与验收标准)
-10. [维护与演进](#十维护与演进)
-11. [模型分级路由（L0-L3）](#十一模型分级路由l0-l3)
-12. [H-ADMC 主从编排模式](#十二h-admc-主从编排模式)
-13. [技能验证协议](#十三技能验证协议)
-14. [子Agent输出标准](#十四子agent输出标准)
-15. [分治驱动层技能](#十五分治驱动层技能)
-16. [CLAUDE.md 集成](#十六claudemd-集成)
-17. [技能内脚本目录](#十七技能内脚本目录)
-18. [技能打包与分发](#十八技能打包与分发)
-
-**附录**：
-- [模板索引](#附录模板索引)
-- [技能类型快速选择](#附录技能类型快速选择)
-- [实践指南](#附录实践指南)
-- [核查清单](#附录核查清单)
+> **Purpose**: Guides creation of project-specific skills. Template reference in `skills/`. Quick start: [docs/quick-start.md](docs/quick-start.md).
 
 ---
 
-## 一、概念与价值
+## Contents
 
-### 1.1 什么是 Agent Skills
+1. [Five-Phase Execution Pipeline](#1-five-phase-execution-pipeline) ← action spine for skill creation
+2. [Dual-Axis Model](#2-dual-axis-model)
+3. [Directory Structure & Deployment Paths](#3-directory-structure--deployment-paths)
+4. [Core Specs Quick Reference](#4-core-specs-quick-reference)
+5. [Skill Template Quick Reference](#5-skill-template-quick-reference)
+6. [Model Tier Routing](#6-model-tier-routing)
+7. [CLAUDE.md Integration](#7-claudemd-integration)
+8. [H-ADMC Decomposition Criteria](#8-h-admc-decomposition-criteria)
+9. [Sub-Agent Output Standards](#9-sub-agent-output-standards)
+10. [Validation Protocol](#10-validation-protocol)
+11. [Delegation Engine](#11-delegation-engine)
+12. [Script Directory](#12-script-directory)
+13. [Maintenance & Evolution](#13-maintenance--evolution)
+14. [Packaging & Distribution](#14-packaging--distribution)
+**Appendix**: [Template Index](#appendix-template-index) · [Skill Quick Select](#appendix-skill-quick-select) · [Practice Quick Reference](#appendix-practice-quick-reference)
 
-Agent Skills（技能）是一组结构化的文档体系，用于指导 AI Agent 在特定项目中的一致性行动。
+---
 
-### 1.2 Skills vs 通用指令
+## 1. Five-Phase Execution Pipeline
 
-| 维度 | 通用指令 | Skills |
+The single execution path for skill creation. Each phase has an explicit executor, input, output, and gate.
+
+```
+Phase 1: ANALYZE ──→ Phase 2: SCAN ──→ Phase 3: GENERATE ──→ Phase 4: VALIDATE ──→ Phase 5: CONFIRM
+    (L1-Sonnet)        (L0-Haiku)         (L1-Sonnet)           (L0-Haiku)            (L1-Sonnet)
+         │                  │                   │                    │                     │
+    Skill plan        Code samples        Skill files          Validation report     approved/revise
+```
+
+### Phase 1: ANALYZE — Project Analysis
+
+- **Executor**: Sonnet (L1)
+- **Output**: `{ skill_plan: [{ name, skill_tier, model_tier, reason }] }`
+
+Analyze project type, tech stack, module structure, team size → determine skill count (2-6) and type combination. Default model tiers:
+
+| Skill Type | Execution | Composition |
+|---------|:--:|:--:|
+| Standards (dev) | L1 | atomic |
+| Code Map (code-map) | **L0** | atomic |
+| Workflow (workflow) | L1 | functional |
+| Scripts (scripts) | L0 | atomic |
+| Call-Chain (call-chain) | L1 | functional |
+| Change Model (change-model) | L1 | functional |
+| Delegation (delegation) | L1 | planning |
+
+> **Gate**: Phase 1 must pause after completion. Wait for user confirmation of the skill plan. Do NOT proceed to Phase 2 without approval.
+
+### Phase 2: SCAN — Code Scanning
+
+- **Executor**: Haiku (L0) — **must delegate**
+- **Output**: Code samples per layer with key pattern identification
+
+| Layer | Scan Target | Record |
 |------|---------|--------|
-| 上下文 | 需要每次描述 | 自动加载 |
-| 准确性 | 依赖模型记忆 | 精确到项目 |
-| 维护性 | 难以更新 | 独立版本控制 |
-| 触发方式 | 手动复制粘贴 | 自动匹配 + slash 命令 |
+| API Layer | Route declarations, param validation, response wrapping | `{method}`, `{class/function name}` |
+| Service Layer | Abstract interfaces, consistency management, param conversion | `{yes/no}`, `{method}` |
+| Data Layer | ORM approach, query organization, pagination | `{framework}`, `{method}` |
+| Integration Layer | Remote calls, message queues, scheduled tasks | `{list}`, `{config}` |
 
-### 1.3 Skills 的价值
+### Phase 3: GENERATE — Generate Skill Files
 
+- **Executor**: Sonnet (L1)
+- **Output**: `.claude/skills/{name}/SKILL.md` + `.claude/skills/{name}/agents/openai.yaml` (default auto-load path; use `skills/{name}/` for template projects)
+
+Hard rules (all mandatory):
+1. Fill frontmatter completely per §4, including dual-axis fields
+2. Extract trigger words from project code (5-15, covering action + query types)
+3. Fill actual version numbers from scan — **no placeholders allowed**
+4. Use actual scanned code snippets (sanitized)
+5. Cross-reference related skills with relative paths
+6. SKILL.md body ≤5000 tokens
+
+Generated skills default to concise, accurate **English** content.
+
+### Phase 4: VALIDATE — Verify
+
+- **Executor**: Haiku (L0) — **must delegate**
+
+```bash
+python scripts/validate-skills.py .claude/skills/{skill-name}
+python scripts/validate-skills.py skills/{skill-name}
+python scripts/validate-skills.py .claude/skills/{skill-name} --semantic
 ```
-通用指令: "开发一个用户模块"
-    ↓ 依赖模型理解和项目知识
-    → 输出依赖随机性
 
-Skills: "在 {tech-stack} 项目中，按 {规范} 开发 {模块}"
-    ↓ 精确上下文
-    → 一致性输出
-```
+| Layer | Pass Condition |
+|--------|---------|
+| V1 Format | frontmatter complete, triggers ≥5, YAML valid |
+| V2 Structure | Dual-axis consistent, composition graph closed, budget within limits |
+| V3 Semantic | File paths ≥95%, method names ≥90%, version numbers 100% |
 
-### 1.4 什么时候需要 Skills
+Skills below this standard must not be published.
 
-| 判断标准 | 说明 | 示例 |
-|---------|------|------|
-| 项目复杂度 > 3 | 模块数 > 3 或技术栈 > 2 种 | 微服务、多框架 |
-| 团队人数 > 2 | 需要统一开发规范 | 协作开发 |
-| 重复性问题 > 3 | 同一类问题出现多次 | "在哪改"、"怎么部署" |
-| 新人入职 | 需要快速了解项目 | onboarding |
+### Phase 5: CONFIRM — User Confirmation
+
+- **Executor**: Sonnet (L1)
+- **Output**: `approved` | `revise({feedback})` | `reject`
+
+Confirm: version numbers correct, standard patterns match expectations, compatibility patterns accurately explained, user docs merged (user docs take precedence).
 
 ---
 
-## 二、技能数量规划
+## 2. Dual-Axis Model
 
-### 2.1 数量决策矩阵
+Every skill is defined on **two independent dimensions**. The axes are orthogonal — decisions on one do not replace decisions on the other.
 
-| 项目特征 | 推荐数量 | 技能组合 |
-|---------|---------|---------|
-| 小型项目 (Bug修复、CSS调整) | 2个 | 规范 + 流程 |
-| 中型项目 (新增页面/组件) | 3个 | 规范 + 地图 + 流程 |
-| 大型项目 (新增模块/改架构) | 4个 | 规范 + 地图 + 流程 + 日志 |
-| 复杂项目 (多服务、多团队) | 5-6个 | 规范 + 地图 + 流程 + 日志 + 调用链 + 脚本 |
+| | Execution Axis (model_tier) | Composition Axis (skill_tier) |
+|--|-------------------|---------------------|
+| **Question** | Who executes? | Where in the composition graph? |
+| **Decision basis** | Cognitive load | Dependencies & abstraction level |
+| **Values** | L0 / L1 / L2 / L3 | meta / planning / functional / atomic |
 
-### 2.2 技能类型与职责
+**Execution axis**: L0=Haiku mechanical · L1=Sonnet bounded implementation · L2=Sonnet/Opus multi-step reasoning · L3=Opus architectural decisions
 
-| 技能类型 | 职责边界 | 核心价值 | 回答的问题 |
-|---------|---------|---------|-----------|
-| 规范技能 | 标准规范 | 技术选型、代码组织 | "用什么技术、怎么组织" |
-| 地图技能 | 代码位置 | 文件导航、组件定位 | "在哪写、哪个文件" |
-| 流程技能 | 开发步骤 | 流程引导、检查清单 | "按什么顺序、从哪开始" |
-| 日志技能 | 变更记录 | 追踪历史、复盘分析 | "改了什么、为什么改" |
-| 调用链技能 | 数据流追踪 | 调用关系、类型验证 | "数据怎么传、最终调用的终点" |
-| 脚本技能 | 运行维护 | 部署回滚、日常运维 | "怎么运行、怎么部署" |
-| 分治驱动技能 | 模型编排 | 强制L0下放、模型路由、子Agent输出标准 | "谁来做、怎么做、什么格式" |
-| 变更模型技能 | 变更文档 | 结构化变更报告、因果链追踪 | "为什么改、影响什么、怎么验证" |
+**Composition axis**: meta=creates skills · planning=task decomposition & routing · functional=reusable multi-step routines · atomic=single information source
 
-### 2.3 技能组合原则
+> atomic+L0 = pure lookup (Haiku executes); functional+L1 = multi-step reasoning (Sonnet executes)
 
-**核心三技能（任何项目都需要）:**
-```
-规范技能 ──────┐
-              ├──→ 完整覆盖开发上下文
-地图技能 ──────┤
-              │
-流程技能 ──────┘
-```
+### Skill Count Decision
 
-**扩展技能（按需添加）:**
-- 调用链技能：存在 API 调用链、数据流复杂的项目
-- 脚本技能：需要频繁运维、部署的项目
-- 日志技能：需要追踪变更、分析问题的项目
-
-### 2.4 何时创建新技能
-
-| 场景 | 判断标准 | 应创建的新技能 |
-|------|---------|---------------|
-| 发现开发流程有缺失环节 | 开发流程中没有覆盖的步骤 | 如"调用链检查" |
-| 重复性问题需要系统化解决 | 同一类问题出现 3 次以上 | 根据问题类型 |
-| 新增独立工具/系统 | 项目引入新模块 | 如"监控系统"、"CI/CD" |
-| 需要固化团队最佳实践 | 团队成员反复询问同一类问题 | 根据问题类型 |
+| Project Profile | Count | Skill Combo |
+|---------|:--:|---------|
+| Small (bug fixes) | 2 | standards + workflow |
+| Medium (new pages) | 3 | + code-map |
+| Large (new modules) | 4 | + change-model |
+| Complex (multi-service) | 5-6 | + call-chain + scripts + delegation |
 
 ---
 
-## 三、目录结构规范
+## 3. Directory Structure & Deployment Paths
 
-### 3.1 完整目录树
+### Production Projects (Recommended — Auto-Loaded)
 
 ```
-{project-root}/
-├── skills/                              # 技能根目录（必须）
-│   ├── README.md                        # 技能总索引（必须）
-│   ├── SKILL-BUILDER-GUIDE.md          # 创建指南（本文件）
-│   ├── {skill-name-1}/                 # 技能目录
-│   │   ├── SKILL.md                     # 核心技能文档（必须）
-│   │   ├── agents/
-│   │   │   └── openai.yaml              # Agent 触发配置（必须）
-│   │   └── scripts/                     # 技能工具脚本（可选）
-│   │       └── *.sh / *.py / *.mjs      # 可执行脚本
-│   ├── {skill-name-2}/
-│   │   ├── SKILL.md
-│   └── {skill-name-N}/
-│       ├── SKILL.md
-│       └── agents/
-│           └── openai.yaml
-└── [项目其他目录...]
+{project}/.claude/skills/{skill-name}/    ← Claude Code auto-injects
+├── SKILL.md              # L2: Core instruction body (≤5000 tokens)
+├── agents/
+│   └── openai.yaml       # L1: Trigger config
+├── references/           # L3: Deep reference, loaded on demand
+├── scripts/              # L4: Executable scripts (zero tokens in context)
+└── assets/               # Static resources
 ```
 
-### 3.2 目录命名规范
+### Template/Methodology Projects (Not Auto-Loaded)
 
-| 规范 | 正确示例 | 错误示例 |
-|------|---------|---------|
-| 使用项目前缀 | `myproject-dev`, `myproject-map` | `dev`, `map` |
-| 中划线分隔 | `myproject-change-workflow` | `myproject_change_workflow` |
-| 全部小写 | `myproject-dev` | `Myproject-Dev` |
-| 目录名 = skill 名 | `myproject-dev/` | `dev/` |
+```
+{project}/skills/{skill-name}/           ← Requires explicit CLAUDE.md routing
+├── SKILL.md
+├── agents/openai.yaml
+├── references/
+├── scripts/
+└── assets/
+```
+
+### Path Selection
+
+| Path | Use Case | Auto-Load | Slash Cmd |
+|------|---------|:---:|:---:|
+| `.claude/skills/` | Production project skills | ✅ | ✅ |
+| `skills/` | Template/methodology projects | ❌ | ❌ |
+| `~/.claude/skills/` | Global cross-project skills | ✅ | ✅ |
+
+> Production projects must use `.claude/skills/`. `skills/` is for template projects only.
+
+### Naming Convention
+
+| Rule | Correct | Wrong |
+|------|------|------|
+| Project prefix | `myproject-dev` | `dev` |
+| Hyphen separator | `myproject-change-workflow` | `myproject_change_workflow` |
+| All lowercase | `myproject-dev` | `Myproject-Dev` |
+| Dir = skill name | `myproject-dev/` | `dev/` |
 
 ---
 
-## 四、frontmatter 元数据规范
+## 4. Core Specs Quick Reference
 
-### 4.1 标准格式
+### 4.1 Frontmatter (Required for SKILL.md)
 
 ```yaml
 ---
-name: [skill-name]                        # 必须：与目录名一致
-description: [一句话描述，30-50字]         # 必须：说明用途和触发场景
-status: active                            # 可选：draft | active | deprecated | superseded
-reviewBy: [YYYY-MM-DD]                    # 可选：建议复核日期（过期后验证工具会告警）
-supersededBy: [new-skill-name]            # 可选：仅 superseded 时需要，指向替代技能
+name: [skill-name]                        # Required: matches directory name
+description: [30-50 words, purpose + trigger] # Required
+model_tier: L0|L1|L2|L3                   # Required: execution axis
+skill_tier: meta|planning|functional|atomic # Required: composition axis
+status: active                            # draft|active|deprecated|superseded
+review_by: [YYYY-MM-DD]                   # Suggested review date
+context_budget:                           # Required
+  l1_metadata: 120
+  l2_body: 5000
+  l3_references: 20000
+version: 1.0.0
 ---
 ```
 
-### 4.2 description 编写规范
-
-| 要素 | 说明 | 示例 |
-|------|------|------|
-| 项目名 | 项目名称或缩写 | 小龙人导航 / resource-station |
-| 技能类型 | 技能类别 | 开发规范、代码导航、开发流程 |
-| 触发场景 | 何时使用 | 当用户询问xxx时触发 |
-| 适用范围 | 哪个模块 | 适用于项目所有模块 |
-
----
-
-## 五、SKILL.md 标准章节
-
-### 5.1 必需章节（所有 skill 必须有）
-
-#### A. 触发条件章节
-
-```markdown
-## 触发条件
-
-- 用户询问xxx时触发
-- 用户说"xxx"时触发
-- 用户描述需求要开发时触发
-```
-
-**编写规范：**
-- 列出所有触发场景（5-10个）
-- 区分"询问类"和"操作类"触发
-- 操作类触发词：新增、修改、查询、创建、开发
-- 询问类触发词：哪里、哪个、什么、怎么、在哪
-
-#### B. 关联技能章节
-
-```markdown
-## 关联技能
-
-- [技能名](../skill-name/SKILL.md) — 关联说明
-- [技能名](../skill-name/SKILL.md) — 关联说明
-```
-
-**编写规范：**
-- 引用2-3个关联技能
-- 说明引用原因
-- 按引用顺序排列（上游→下游）
-
-### 5.2 可选章节（根据技能类型选择）
-
-| 章节类型 | 适用技能 | 说明 |
-|---------|---------|------|
-| 项目架构 | dev, map | 模块/服务结构 |
-| 技术栈 | dev | 依赖版本、npm包 |
-| 目录结构 | map | 详细目录树 |
-| 组件清单 | map | 功能→组件映射表 |
-| 页面路由 | map | 路由→页面文件映射 |
-| 集合定义 | dev, map | 数据模型定义 |
-| 流程总览 | workflow | 流程图+阶段说明 |
-| 开发模板 | workflow | 可执行代码/文档模板 |
-| 检查清单 | workflow | 可勾选检查项 |
-| 报告模板 | log | 完整文档结构 |
-
-### 5.3 章节内容编写规范
-
-#### 表格规范
-
-```markdown
-| 列1 | 列2 | 说明 |
-|-----|-----|------|
-| 内容 | 内容 | 说明 |
-```
-
-| 表格类型 | 适用场景 | 示例 |
-|---------|---------|------|
-| 定义表 | 规范/配置 | 技术栈、依赖版本 |
-| 清单表 | 模块/功能列表 | 组件清单、路由清单 |
-| 检查表 | 检查项/验证点 | 编码检查、开发检查 |
-| 映射表 | 关系对应 | 路由→文件、数据模型映射 |
-
-#### 流程图规范（ASCII）
-
-```markdown
-## 流程总览
-
-```
-阶段1 → 阶段2 → 阶段3
-         ↓
-       阶段3.1
-```
-```
-
-#### 代码块规范
-
-```markdown
-```[语言]
-代码内容
-```
-```
-
-| 语言标识 | 用途 |
-|---------|------|
-| `typescript` | TypeScript/React 代码 |
-| `bash` | Shell 脚本 |
-| `sql` | SQL 语句 |
-| `json` | JSON 数据 |
-| `python` | Python 代码 |
-| `yaml` | YAML 配置 |
-
----
-
-## 六、agents/openai.yaml 规范
-
-### 6.1 标准格式
+### 4.2 openai.yaml (Required)
 
 ```yaml
-skill: [skill-name]                       # 必须：与目录名一致
-description: [一句话描述]                  # 必须：与SKILL.md description一致
-triggers:                                 # 必须：5-15个触发词
-  - [触发词1]
-  - [触发词2]
-  - [触发词3]
+skill: [skill-name]                       # Matches directory name
+description: [one-liner, matches SKILL.md]
+triggers:                                 # Required: 5-15 trigger words
+  - [action trigger 1]
+  - [query trigger 2]
 ```
 
-### 6.2 triggers 编写规范
+Trigger rules: 5-15 items, 2-8 words each, cover action type (create/modify/query/build) + query type (where/which/how/locate). Avoid semantic duplicates and overly generic terms.
 
-| 规范 | 说明 |
-|------|------|
-| 数量 | 5-15个，推荐8-10个 |
-| 长度 | 2-8个字 |
-| 覆盖类型 | 操作类+询问类都要有 |
-| 不重复 | 避免语义重复的触发词 |
+### 4.3 Required SKILL.md Sections
 
-**触发词分类示例：**
+**Trigger Conditions** (required) — List all trigger scenarios (5-10), distinguish action vs. query triggers.
 
-| 类别 | 示例触发词 |
-|------|-----------|
-| 操作类-开发 | 新增页面、新增组件、修改功能、开发需求 |
-| 操作类-导航 | 项目结构、目录结构、文件位置、组件位置 |
-| 操作类-记录 | 记录变更、生成报告、查看变更 |
-| 询问类 | 在哪里开发、哪个模块、怎么实现、页面在哪 |
-| 名词类 | 数据模型、API接口、集合配置 |
+**Related Skills** (required) — Reference 2-3 related skills, ordered upstream→downstream, using relative paths.
 
-### 6.3 triggers 示例对比
-
-| 等级 | triggers | 评价 |
-|------|----------|------|
-| ❌ 差 | `["开发", "规范"]` | 太少、不精准 |
-| ⚠️ 可 | `["开发规范", "项目结构"]` | 缺少操作类 |
-| ✅ 好 | `["开发规范", "项目结构", "新增页面", "新增组件", "修改功能", "在哪里开发", "模块位置", "集合配置"]` | 覆盖全面 |
+Optional sections: Project architecture, tech stack, directory structure, component inventory, page routes, workflow overview, checklists, report templates — choose based on skill type.
 
 ---
 
-## 七、README.md 结构
+## 5. Skill Template Quick Reference
 
-### 7.1 标准结构
+Each skill type needs only frontmatter + required section skeleton. Full templates in corresponding `skills/` directories.
 
-```markdown
-# {项目名} Skills
+### Standards (dev) — L1 / atomic
 
-## Skills 清单
-
-| Skill名称 | 用途 | 触发场景 |
-|----------|------|---------|
-| `{skill-name}` | 技能用途简短描述 | 触发场景描述 |
-
-## 使用方式
-
-### 方式一：Slash 命令
-
+```yaml
+name: {project}-dev
+description: {Project} development standards. Triggered when asking about tech stack, code standards, API conventions.
+model_tier: L1
+skill_tier: atomic
 ```
-/skill-name
-```
+Required sections: Tech stack (version numbers from code scan), layered architecture, code standards, API conventions, config & environment
+Reference: [skills/example-dev/](skills/example-dev/)
 
-### 方式二：自然语言触发
+### Code Map (code-map) — L0 / atomic
 
-- "触发词" → `skill-name`
-
-## 目录结构
-
-```
-skills/
-├── README.md
-├── SKILL-BUILDER-GUIDE.md
-├── skill-name-1/
-│   ├── SKILL.md
-│   └── agents/openai.yaml
-└── skill-name-2/
-    ├── SKILL.md
-    └── agents/openai.yaml
-```
-
-## 各 Skill 详情
-
-### skill-name
-
-**包含内容：**
-- 技能主要内容
-- 使用场景
-- 关联技能
-```
-
----
-
-## 八、技能模板
-
-### 8.1 规范技能模板（通用）
-
-```markdown
----
-name: {project}-{dev|spec}
-description: {项目名}开发规范查询。当用户询问技术栈、代码规范、API规范、配置项或开发规范时触发。
----
-
-# {项目名}开发规范
-
-## 触发条件
-
-- 用户询问技术栈、依赖版本
-- 用户询问代码规范
-- 用户询问 API 规范
-- 用户询问配置项
-- 新功能开发前的规范确认
-
-## 关联技能
-
-- [代码地图](../{project}-code-map/SKILL.md) — 文件位置、组件位置
-- [变更流程](../{project}-change-workflow/SKILL.md) — 开发步骤与检查清单
-
----
-
-## 一、项目架构
-
-### 1.1 模块结构
-
-| 模块 | 路径 | 职责 |
-|------|------|------|
-| 主模块 | `/{path}` | 主要功能 |
-| 管理后台 | `/{path}-admin` | 后台管理 |
-| API服务 | `/api` | 前后端数据接口 |
-
-### 1.2 技术栈
-
-| 依赖 | 版本 | 说明 |
-|------|------|------|
-| {框架} | {版本} | {用途} |
-| {语言} | {版本} | {用途} |
-| {数据库} | {版本} | {用途} |
-| {ORM/工具} | {版本} | {用途} |
-
-## 二、代码规范
-
-### 2.1 {语言} 编码规范
-
-```{{language}}
-// 代码示例
-```
-
-### 2.2 项目特有规范
-
-- 规范1
-- 规范2
-- 规范3
-
-## 三、API 规范
-
-### 3.1 REST API 设计
-
-```{{language}}
-// API 示例
-```
-
-### 3.2 内部调用规范
-
-{项目特定的内部调用说明}
-
-## 四、配置与环境
-
-### 4.1 环境变量
-
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| VAR_NAME | 变量说明 | 示例值 |
-
-### 4.2 配置文件
-
-| 文件 | 用途 |
-|------|------|
-| {file} | {用途} |
-```
-
-### 8.2 地图技能模板（通用）
-
-```markdown
----
+```yaml
 name: {project}-code-map
-description: {项目名}代码地图。当用户询问项目结构、目录结构、文件位置、组件位置、页面路由时触发。
----
-
-# {项目名}代码地图
-
-## 触发条件
-
-- 用户询问项目结构、目录结构
-- 用户询问"在哪里开发"
-- 用户询问"某个页面在哪个文件"
-- 用户询问"组件在哪个文件"
-- 用户询问文件位置
-
-## 关联技能
-
-- [开发规范](../{project}-dev/SKILL.md) — 技术栈、代码规范
-- [变更流程](../{project}-change-workflow/SKILL.md) — 开发步骤与检查清单
-
----
-
-## 一、项目总体结构
-
+description: {Project} code map. Triggered when asking about file locations, directory structure, component positions.
+model_tier: L0
+skill_tier: atomic
 ```
-{project-root}/
-├── src/                     # 源代码
-│   ├── {module1}/          # 模块1
-│   ├── {module2}/          # 模块2
-│   └── {module3}/          # 模块3
-├── tests/                   # 测试
-├── configs/                 # 配置
-└── scripts/                 # 脚本
-```
+Required sections: Directory structure, route mapping, component inventory
+Reference: [skills/example-code-map/](skills/example-code-map/)
 
-## 二、模块结构
-
-### {模块名}
-
-**路径**: `src/{module}/`
-
-| 文件/目录 | 类型 | 说明 |
-|----------|------|------|
-| {file} | {类型} | {说明} |
-
-## 三、路由与页面
-
-### 3.1 页面路由
-
-| 路径 | 文件 | 说明 |
-|------|------|------|
-| / | `src/pages/index.tsx` | 首页 |
-| /{path} | `src/pages/{path}/index.tsx` | {说明} |
-
-### 3.2 API 路由
-
-| 路由 | 方法 | 说明 |
-|------|------|------|
-| /api/{name} | GET/POST | {说明} |
-
-## 四、组件清单
-
-| 组件 | 路径 | 说明 |
-|------|------|------|
-| {Component} | `src/components/{Component}.tsx` | {说明} |
-```
-
-### 8.3 流程技能模板（通用）
-
-```markdown
----
-name: {project}-change-workflow
-description: {项目名}开发流程。当用户描述开发需求、询问开发步骤、申请变更时触发。
----
-
-# {项目名}开发流程
-
-## 触发条件
-
-- 用户描述开发需求
-- 用户询问开发步骤
-- 用户申请变更
-- 用户询问如何开始开发
-
-## 关联技能
-
-- [开发规范](../{project}-dev/SKILL.md) — 技术栈、代码规范
-- [代码地图](../{project}-code-map/SKILL.md) — 文件位置、组件位置
-
----
-
-## 一、开发流程总览
-
-```
-需求理解 → 方案设计 → 编码实现 → 规范检查 → 提交部署
-```
-
-## 二、阶段详细步骤
-
-### 阶段一：需求理解
-
-**输入**: 用户需求描述
-
-**步骤**:
-1. 澄清需求细节
-2. 确认验收标准
-3. 识别技术难点
-
-**输出**: 需求澄清文档
-
-### 阶段二：方案设计
-
-**输入**: 需求澄清文档
-
-**步骤**:
-1. 确定受影响模块
-2. 设计数据模型变更
-3. 设计 API 变更
-4. 编写设计方案
-
-**输出**: 设计方案
-
-### 阶段三：编码实现
-
-**输入**: 设计方案
-
-**步骤**:
-1. 创建功能分支
-2. 按模块编码
-3. 编写单元测试
-4. 本地验证
-
-**输出**: 实现代码
-
-### 阶段四：规范检查
-
-**输入**: 实现代码
-
-**步骤**:
-1. 代码规范检查
-2. 类型检查
-3. 测试覆盖检查
-4. 调用链检查（如有）
-
-**输出**: 检查报告
-
-### 阶段五：提交部署
-
-**输入**: 检查报告
-
-**步骤**:
-1. 提交代码审查
-2. 合并到主分支
-3. 部署到测试环境
-4. 验证功能
-
-**输出**: 部署完成
-
-## 三、检查清单
-
-### 编码前检查
-- [ ] 需求已澄清
-- [ ] 方案已设计
-- [ ] 影响范围已确认
-
-### 编码后检查
-- [ ] 代码规范符合
-- [ ] 单元测试通过
-- [ ] 类型检查通过
-- [ ] API 测试通过
-
-### 提交前检查
-- [ ] 分支已更新
-- [ ] 提交信息规范
-- [ ] 无敏感信息泄露
-```
-
-### 8.4 调用链技能模板（通用）
-
-```markdown
----
-name: {project}-call-chain
-description: {项目名}调用链检查。当需要追踪 API 调用链、检查数据流、验证数据类型或确认最终调用时触发。
----
-
-# {项目名}调用链检查
-
-## 触发条件
-
-- 用户询问"调用链是什么"
-- 用户询问"数据流是怎样的"
-- 用户询问"数据类型是否正确"
-- 开发新功能时需要追踪调用链
-- 上线前需要验证完整的数据流
-
-## 关联技能
-
-- [开发规范](../{project}-dev/SKILL.md) — 技术栈、API规范
-- [代码地图](../{project}-code-map/SKILL.md) — 文件位置、API路由位置
-- [变更流程](../{project}-change-workflow/SKILL.md) — 开发步骤与检查清单
-
----
-
-## 一、调用链检查概念
-
-### 1.1 什么是调用链
-
-调用链是指数据从请求到最终存储/展示的完整路径。
-
-### 1.2 调用链检查的重要性
-
-| 阶段 | 问题 | 影响 |
-|------|------|------|
-| 开发中 | 调用链断裂 | 功能不完整 |
-| 开发中 | 数据类型不匹配 | 运行时错误 |
-| 上线前 | 最终调用验证失败 | 功能失效 |
-
-## 二、调用链追踪方法
-
-### 2.1 追踪入口到终点
-
-**步骤**:
-1. 确定入口点（API / 页面 / 事件）
-2. 追踪每个中间环节
-3. 确认数据类型在每个环节
-4. 验证最终调用
-
-### 2.2 数据类型检查
-
-| 检查项 | 检查内容 | 验证方法 |
-|--------|---------|---------|
-| 参数类型 | 类型是否正确 | 查看函数签名 |
-| 返回值类型 | 结构是否符合预期 | 对比 interface/type |
-| 跨服务类型 | 服务间传递的类型 | 检查序列化/反序列化 |
-
-## 三、最终调用检查
-
-### 3.1 什么是最终调用
-
-最终调用是指数据流经所有中间环节后，最终到达的终点：
-- 数据库写入（INSERT/UPDATE）
-- 外部 API 调用
-- 消息队列发送
-- 缓存写入
-
-### 3.2 最终调用检查清单
-
-| 检查项 | 说明 |
-|--------|------|
-| 数据格式正确 | 最终写入的数据格式正确 |
-| 权限验证通过 | 有权执行该操作 |
-| 错误处理完整 | 任何环节的错误都能被捕获 |
-| 响应格式正确 | 返回给调用方的格式正确 |
-
-## 四、常见问题与修复
-
-### 4.1 调用链断裂
-
-| 问题 | 原因 | 修复 |
-|------|------|------|
-| API 未实现 | 方法未导出 | 添加方法 |
-| 路径错误 | 路径不匹配 | 修正路径 |
-| 服务不可达 | 网络/配置 | 检查配置 |
-
-### 4.2 数据类型不匹配
-
-| 问题 | 原因 | 修复 |
-|------|------|------|
-| 类型未 await | Promise 未处理 | await 处理 |
-| 可选字段未处理 | 缺少默认值 | 使用 ?? 或 \|\| |
-| 序列化丢失 | 跨服务传递 | 检查序列化逻辑 |
-```
-
-### 8.5 脚本技能模板（通用）
-
-```markdown
----
-name: {project}-scripts
-description: {项目名}脚本工具。当用户需要运行维护脚本、执行批量操作、自动化部署时触发。脚本用于可重复多交互类操作，由脚本一次性完成并返回报告，降低交互次数。
----
-
-# {项目名}脚本工具
-
-## 触发条件
-
-### 操作类（一次性完成）
-- "运行脚本" / "执行维护"
-- "一键部署" / "批量操作"
-- "初始化数据" / "导出数据"
-- "自动化任务" / "定时执行"
-
-### 询问类
-- "有哪些脚本可用" / "脚本列表"
-- "脚本怎么用" / "脚本参数"
-
-## 关联技能
-
-- [开发规范](../{project}-dev/SKILL.md) — 技术栈、环境配置
-- [变更流程](../{project}-change-workflow/SKILL.md) — 部署流程衔接
-
----
-
-## 一、脚本设计原则
-
-### 1.1 核心理念
-
-**脚本 vs 交互式操作**:
-
-| 对比项 | 交互式操作 | 脚本执行 |
-|--------|-----------|---------|
-| 交互次数 | 多次往返 | 一次完成 |
-| 适用场景 | 探索性操作 | 可预期任务 |
-| 用户介入 | 每次确认 | 无需介入 |
-| Token 成本 | 高 | 低 |
-
-**脚本的优势**:
-- 降低 AI 交互次数
-- 保证操作一致性
-- 可重复执行
-- 可记录审计
-
-### 1.2 脚本分类
-
-| 类型 | 说明 | 示例 |
-|------|------|------|
-| 部署脚本 | 环境搭建、服务启动 | `deploy.sh` |
-| 数据脚本 | 导入导出、批量处理 | `import-data.mjs` |
-| 维护脚本 | 清理、备份、优化 | `cleanup.sh` |
-| 自动化脚本 | 定时任务、CI/CD | `cron-job.sh` |
-| 初始化脚本 | 初始数据、环境配置 | `seed.mjs` |
-
----
-
-## 二、脚本清单模板
-
-### 脚本清单表格
-
-| 脚本名称 | 路径 | 类型 | 功能 | 使用方式 |
-|----------|------|------|------|---------|
-| `{script-name}` | `scripts/{script}.sh` | 部署 | 服务部署 | `bash scripts/{script}.sh` |
-| `{script-name}` | `scripts/{script}.mjs` | 数据 | 数据导入 | `node scripts/{script}.mjs` |
-
----
-
-## 三、脚本编写规范
-
-### 3.1 输出报告格式
-
-脚本执行后必须输出结构化报告：
-
-```json
-{
-  "status": "success|failure",
-  "script": "script-name",
-  "startTime": "2026-01-01T00:00:00Z",
-  "endTime": "2026-01-01T00:01:00Z",
-  "duration": 60000,
-  "summary": {
-    "total": 100,
-    "success": 98,
-    "failed": 2
-  },
-  "details": [
-    {
-      "action": "操作描述",
-      "status": "success|failure",
-      "message": "详细信息"
-    }
-  ],
-  "errors": [
-    {
-      "item": "失败项",
-      "reason": "失败原因"
-    }
-  ]
-}
-```
-
-### 3.2 错误处理规范
-
-```bash
-# 错误处理模板
-set -e  # 遇错即停
-set -o pipefail  # 管道失败也算失败
-
-# 主逻辑
-main() {
-  check_prerequisites || die "前置条件不满足"
-  execute_operation || die "操作失败"
-  generate_report || die "报告生成失败"
-}
-
-# 报告生成
-generate_report() {
-  echo '{"status": "success", ...}'
-}
-```
-
-### 3.3 参数解析规范
-
-```bash
-# 参数解析模板
-usage() {
-  echo "用法: $0 [选项]"
-  echo "  -h, --help      显示帮助"
-  echo "  -e, --env       环境 (dev|staging|prod)"
-  echo "  -n, --dry-run   模拟运行"
-}
-
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -h|--help) usage; exit 0 ;;
-    -e|--env) ENV="$2"; shift 2 ;;
-    -n|--dry-run) DRY_RUN=true; shift ;;
-    *) echo "未知参数: $1"; usage; exit 1 ;;
-  esac
-done
-```
-
----
-
-## 四、执行流程
-
-### 4.1 标准执行流程
-
-```
-① 前置检查
-   ├── 环境检查（Node.js版本、环境变量）
-   ├── 依赖检查（必要的CLI工具）
-   └── 权限检查（读写权限）
-
-② 执行操作
-   ├── 主体逻辑
-   ├── 进度记录
-   └── 错误捕获
-
-③ 生成报告
-   ├── 状态汇总
-   ├── 详细日志
-   └── 错误列表
-```
-
-### 4.2 日志记录
-
-```bash
-# 日志函数
-log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
-}
-
-log "开始执行..."
-log "步骤1: 检查环境"
-log "步骤2: 执行操作"
-log "执行完成"
-```
-
----
-
-## 五、常用脚本示例
-
-### 5.1 部署脚本
-
-```bash
-#!/usr/bin/env bash
-# deploy.sh - 一键部署脚本
-
-set -e
-set -o pipefail
-
-ENV=${1:-prod}
-DRY_RUN=${DRY_RUN:-false}
-
-echo '{"script": "deploy", "status": "running", "env": "'$ENV'"}'
-
-# 前置检查
-check_prerequisites() {
-  command -v docker >/dev/null || { echo '{"status": "failure", "error": "docker not found"}'; exit 1; }
-  command -v npm >/dev/null || { echo '{"status": "failure", "error": "npm not found"}'; exit 1; }
-}
-
-# 执行部署
-deploy() {
-  log "构建镜像..."
-  npm run build
-  docker build -t myapp:$ENV .
-  docker push myapp:$ENV
-  log "部署完成"
-}
-
-# 生成报告
-report() {
-  echo '{"status": "success", "summary": {"total": 1, "success": 1}}'
-}
-
-check_prerequisites && deploy && report
-```
-
-### 5.2 数据脚本
-
-```javascript
-// import-data.mjs - 数据导入脚本
-
-import { readFileSync } from 'fs';
-
-const report = {
-  status: 'running',
-  script: 'import-data',
-  startTime: new Date().toISOString(),
-  summary: { total: 0, success: 0, failed: 0 },
-  details: [],
-  errors: []
-};
-
-async function main() {
-  try {
-    // 读取数据
-    const data = JSON.parse(readFileSync('data.json', 'utf-8'));
-    report.summary.total = data.length;
-
-    // 处理数据
-    for (const item of data) {
-      try {
-        await processItem(item);
-        report.summary.success++;
-        report.details.push({ action: `Import ${item.id}`, status: 'success' });
-      } catch (err) {
-        report.summary.failed++;
-        report.errors.push({ item: item.id, reason: err.message });
-      }
-    }
-
-    report.status = 'success';
-  } catch (err) {
-    report.status = 'failure';
-    report.errors.push({ item: 'global', reason: err.message });
-  }
-
-  report.endTime = new Date().toISOString();
-  console.log(JSON.stringify(report, null, 2));
-}
-
-main();
-```
-```
-
----
-
-### 8.6 变更日志技能模板（通用）
-
-```markdown
----
-name: {project}-diffs
-description: {项目名}变更日志与完整变更报告。当用户需要记录变更、生成变更报告、追踪变更历史时触发。报告包含完整的需求、代码变更、数据模型、调用链检查和回滚方案。
----
-
-# {项目名}变更日志与报告
-
-## 触发条件
-
-### 操作类
-- "记录这次变更" / "生成变更报告"
-- "更新 changelog" / "追加变更记录"
-- "导出变更报告" / "生成 diff 报告"
-
-### 询问类
-- "查看变更历史" / "最近做了什么"
-- "某功能的变更记录" / "回滚方案"
-
-## 关联技能
-
-- [变更流程](../{project}-change-workflow/SKILL.md) — 变更执行的上一环节
-- [调用链检查](../{project}-call-chain/SKILL.md) — 报告中的调用链验证
-
----
-
-## 一、变更报告体系
-
-### 1.1 核心理念
-
-**完整变更报告的价值**:
-
-| 组成 | 价值 |
-|------|------|
-| 需求报告 | 明确「为什么改」 |
-| 代码变更 | 记录「改了什么」 |
-| 数据模型 | 理解「影响范围」 |
-| 调用链检查 | 确保「正确性」 |
-| 回滚方案 | 提供「保险」 |
-
-**与传统 changelog 的区别**:
-
-| 对比项 | 传统 Changelog | 完整变更报告 |
-|--------|---------------|--------------|
-| 内容 | 简短条目 | 完整上下文 |
-| 代码变更 | 无 | 有 diff |
-| 数据模型 | 无 | 有对象定义 |
-| 调用链 | 无 | 有检查结果 |
-| 回滚方案 | 无 | 有详细步骤 |
-
----
-
-## 二、变更报告模板
-
-### 2.1 完整报告结构
-
-```markdown
-# 变更报告
-
-## 基本信息
-
-| 字段 | 值 |
-|------|-----|
-| 报告编号 | {id} |
-| 变更日期 | {date} |
-| 变更类型 | {type} |
-| 影响范围 | {scope} |
-| 执行人 | {author} |
-
-## 一、需求报告
-
-### 1.1 需求背景
-
-{描述变更的背景和动机}
-
-### 1.2 需求描述
-
-{详细的需求描述}
-
-### 1.3 验收标准
-
-- [ ] 标准1
-- [ ] 标准2
-
-## 二、代码变更
-
-### 2.1 变更统计
-
-| 类型 | 数量 |
-|------|------|
-| 新增文件 | {count} |
-| 修改文件 | {count} |
-| 删除文件 | {count} |
-| 新增代码行 | {count} |
-| 删除代码行 | {count} |
-
-### 2.2 变更详情
-
-#### 新增文件
-
-```
-{file-path}
-```
-
-#### 修改文件
-
-```diff
-{file-path}
---- a/{file}
-+++ b/{file}
-@@ -1,3 +1,4 @@
- {diff-content}
-```
-
-## 三、数据模型变更
-
-### 3.1 集合/表变更
-
-| 集合/表名 | 操作 | 说明 |
-|-----------|------|------|
-| {name} | CREATE/ALTER/DROP | {desc} |
-
-### 3.2 字段变更
-
-| 集合 | 字段 | 操作 | 类型 | 说明 |
-|------|------|------|------|------|
-| {table} | {field} | ADD/MOD/DEL | {type} | {desc} |
-
-### 3.3 数据迁移
-
-```sql
--- 迁移脚本
-{MIGRATION_SQL}
-```
-
-## 四、调用链检查报告
-
-### 4.1 检查结果
-
-| 检查项 | 状态 | 说明 |
-|--------|------|------|
-| 入口验证 | PASS/FAIL | {desc} |
-| 类型检查 | PASS/FAIL | {desc} |
-| 权限检查 | PASS/FAIL | {desc} |
-| 最终调用 | PASS/FAIL | {desc} |
-
-### 4.2 数据流图
-
-```
-{入口}
-  → {中间环节1}
-    → {中间环节2}
-      → {最终调用}
-```
-
-## 五、回滚方案
-
-### 5.1 自动回滚
-
-```bash
-# 回滚命令
-bash scripts/rollback.sh {version}
-```
-
-### 5.2 手动回滚步骤
-
-1. **代码回滚**
-   ```bash
-   git checkout {previous-commit}
-   ```
-
-2. **数据回滚**
-   ```sql
-   {ROLLBACK_SQL}
-   ```
-
-3. **验证**
-   - [ ] 服务启动正常
-   - [ ] 功能验证通过
-   - [ ] 无错误日志
-
-### 5.3 回滚检查清单
-
-- [ ] 代码已回滚到上一版本
-- [ ] 数据已恢复到变更前状态
-- [ ] 服务已重启
-- [ ] 功能已验证
-
-## 六、变更记录
-
-| 时间 | 操作 | 执行人 | 说明 |
-|------|------|--------|------|
-| {date} | 创建报告 | {author} | 初始变更记录 |
-
----
-
-## 附录：相关资源
-
-- Commit: {commit-link}
-- PR: {pr-link}
-- 文档: {doc-link}
-```
-
----
-
-## 三、变更报告生成流程
-
-### 3.1 报告生成时机
-
-| 阶段 | 操作 | 说明 |
-|------|------|------|
-| 变更前 | 创建报告草稿 | 记录需求和方案 |
-| 变更中 | 更新代码变更 | 记录 diff |
-| 变更后 | 补充数据模型和调用链检查 | 完整报告 |
-| 上线后 | 补充回滚方案 | 最终报告 |
-
-### 3.2 自动生成命令
-
-```bash
-# 生成变更报告
-bash scripts/generate-diff-report.sh --id {id} --type {type}
-
-# 输出完整报告
-{
-  "reportId": "{id}",
-  "path": "docs/changes/{id}.md",
-  "summary": {
-    "filesChanged": {count},
-    "linesAdded": {count},
-    "linesRemoved": {count}
-  }
-}
-```
-
-### 3.3 报告存储
-
-存档目录结构和操作的完整方法论见 `skills/change-model/SKILL.md` 第八、九章（变更存档设计 + 存档流程与工具）。
-
-```
-docs/
-└── changes/              # 变更报告目录
-    ├── INDEX.md          # 变更索引（按时间/类型双维度）
-    ├── 2026-01-01/      # 按日期组织
-    │   ├── {YYYYMMDD}-01-{描述}.md    # 完整报告
-    │   └── {YYYYMMDD}-02-{描述}.md
-    └── ...
-```
-
-参考实现脚本：
-- `skills/change-model/scripts/generate-git-report.py` — 从 Git 历史生成报告
-- `skills/change-model/scripts/archive-report.py` — 手动报告归档
-
----
-
-## 四、变更索引
-
-### 4.1 索引结构
-
-```markdown
-# 变更索引
-
-## 按时间排序
-
-| 日期 | 报告编号 | 变更类型 | 影响范围 | 执行人 | 状态 |
-|------|----------|----------|----------|--------|------|
-| {date} | {id} | {type} | {scope} | {author} | DONE |
-
-## 按类型排序
-
-### 功能开发
-- {date} [{id}]({path}) - {desc}
-
-### Bug 修复
-- {date} [{id}]({path}) - {desc}
-
-### 架构变更
-- {date} [{id}]({path}) - {desc}
-```
-
-### 4.2 快速查询
-
-```bash
-# 查询最近的变更
-grep -r "^{date}" docs/changes/
-
-# 查询某类型的变更
-grep -r "type: {type}" docs/changes/
-
-# 生成变更统计
-bash scripts/stats.sh --from {date} --to {date}
-```
-
----
-
-## 五、报告模板变量
-
-### 5.1 必填变量
-
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| {id} | 报告唯一ID | `CHANGE-2026-001` |
-| {date} | 变更日期 | `2026-01-01` |
-| {type} | 变更类型 | `feature/bugfix/refactor` |
-| {scope} | 影响范围 | `site/cms/api` |
-| {author} | 执行人 | `username` |
-
-### 5.2 选填变量
-
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| {commit} | Git commit | `abc1234` |
-| {pr} | PR 链接 | `#123` |
-| {reviewer} | 审核人 | `username` |
-
----
-
-## 六、常见问题
-
-### Q1: 报告太长了怎么办？
-
-将详细 diff 分离到单独文件：
-
-```markdown
-## 二、代码变更（简略）
-
-详见: [{id}.diff]({id}.diff)
-
-### 变更统计
-- 新增文件: 5
-- 修改文件: 12
-```
-
-### Q2: 如何关联多个 commit？
-
-```markdown
-## 六、变更记录
-
-| 时间 | 操作 | Commit | 说明 |
-|------|------|--------|------|
-| {date} | commit | abc1234 | 初始实现 |
-| {date} | commit | def5678 | 修复bug |
-```
-
-### Q3: 回滚失败怎么办？
-
-1. 立即通知相关人员
-2. 启动备用方案（功能开关）
-3. 回滚到更早的稳定版本
-4. 分析失败原因并记录
-```
-
----
-
-### 8.7 变更模型技能模板
-
-变更模型技能是一种结构化的变更文档格式，将代码 diff 转化为 WHY/WHAT/HOW/VALIDATION 四层架构的报告。
-
-**完整指南位置**: `skills/change-model/SKILL.md`（主体八~九章 + 附一~附二）
-
-**核心特点**:
-
-| 特点 | 说明 |
-|------|------|
-| 四层架构 | WHY → WHAT → HOW → VALIDATION |
-| 因果链追踪 | 变更背景 → 需求 → 影响 → 设计 → 实现 → 验证 |
-| 风险分级 | L0-L3 风险等级定义 |
-| 指南模板 | 提供标准填写模板和通用示例 |
-| 存档体系 | **主体** — 按日期归档 + INDEX.md 双维度索引（第八~九章） |
-| Git 分析 | **附属** — 从提交历史补全变更报告（附一） |
-
-**主流程**: 先写报告 → 变更实现 → 调用链检查 → 测试验证 → 归档存档
-
-**章节导航**:
-
-| 章节 | 定位 | 内容 |
-|------|:----:|------|
-| 一~七 | 主体 | 核心方法论（四层架构、填写规范、调用链检查、通用示例） |
-| 八~九 | **主体** | **变更存档设计 + 存档流程与工具** |
-| 附一 | 附属 | 从 Git 历史生成变更报告（补充历史记录） |
-| 附二 | 附属 | 与 CI/CD 集成（延伸参考） |
-
-**适用场景**:
-
-- 需要生成结构化变更文档
-- 需要追踪变更的因果链
-- 需要评估变更风险和影响
-- 需要归档变更记录、建立可追溯的变更历史
-- 需要从 Git 历史快速生成 Release Notes
-- 创建项目专属的变更报告技能
-
-**使用方式**:
-
-参照 `skills/change-model/SKILL.md` 中的四层架构和方法论，为项目生成专属的变更报告技能。参考实现脚本（`generate-git-report.py`、`archive-report.py`）位于 `skills/change-model/scripts/`，需根据项目实际情况调整后使用。
-
-### 8.8 分治驱动技能模板
-
-分治驱动技能是元技能，定义主模型与子模型的分工规则。**不直接参与业务开发**，而是指导任务路由。
-
-**本项目实现**: `skills/delegation/SKILL.md` — 基于 H-ADMC 精简适配的实用分治规则。
-
-**模板（供其他项目参考）**: `skills/example-delegation/SKILL.md`
-
-**核心特点**:
-
-| 特点 | 说明 |
-|------|------|
-| L0 默认下放 | 文件查找、信息查阅、命令执行派 Haiku |
-| 拆解判断标准 | 六条标准判断是否需要拆解任务 |
-| 分治模式 | 三种常用分治模式（信息收集、并行批量、复杂调查） |
-| 输出规范 | 结论/依据/不确定性 三要素格式 |
-
-**详细规则**：见[第十五章 分治驱动层技能](#十五分治驱动层技能)及 `skills/delegation/SKILL.md`。
-
----
-
-## 九、创建步骤与验收标准
-
-### 9.1 创建步骤
-
-#### 步骤1：项目分析
-
-**产出**: 技能组合方案
-
-**分析内容**:
-1. 项目类型（前端/后端/全栈/微服务）
-2. 技术栈（框架、语言、数据库）
-3. 模块划分（业务模块、技术模块）
-4. 团队规模（单人/团队）
-
-**决策**:
-- 确定技能数量（2-6个）
-- 确定技能类型组合
-- **为每个技能标注模型等级**（L0/L1/L2/L3）
-
-#### 步骤2：目录结构创建
-
-**产出**: 完整的 skills 目录结构
-
-**执行**:
-```bash
-mkdir -p skills
-cd skills
-mkdir -p {skill-name-1}/agents
-mkdir -p {skill-name-2}/agents
-# ...
-```
-
-#### 步骤3：编写 SKILL.md
-
-**产出**: 各技能的 SKILL.md 文档
-
-**顺序建议**:
-1. 先编写规范技能（dev/spec）
-2. 再编写地图技能（code-map）
-3. 最后编写流程技能（workflow）
-4. 按需编写扩展技能
-
-#### 步骤4：编写 agents/openai.yaml
-
-**产出**: 各技能的触发配置
-
-**要求**:
-- triggers 数量：5-15个
-- 覆盖操作类 + 询问类
-- 与 SKILL.md description 一致
-- **在 short_description 开头标注模型等级**（如 "L0 — 文件定位"）
-
-#### 步骤5：编写 README.md
-
-**产出**: 技能总索引
-
-**内容**:
-- Skills 清单表格（含模型等级列）
-- 使用方式说明
-- 目录结构
-- 分治规则（或引用 CLAUDE.md）
-
-#### 步骤6：验证与测试
-
-**验证内容**:
-- Slash 命令可触发
-- 自然语言可触发
-- 内容与实际项目一致
-- **声明通过代码级验证**（参考第13章验证协议）
-- **模型等级标注正确**（L0技能必须声明为Haiku执行）
-
-### 9.2 验收标准
-
-| 标准 | 检查项 | 通过条件 |
-|------|--------|---------|
-| 功能性 | Slash 命令触发 | 命令存在且可执行 |
-| 功能性 | 自然语言触发 | 触发词匹配成功 |
-| 内容性 | 技术栈准确 | 与项目实际一致 |
-| 内容性 | 目录结构准确 | 与项目实际一致 |
-| 内容性 | 模板可直接使用 | 复制后略作修改即可 |
-| 流程性 | 开发流程可执行 | 从需求到交付完整 |
-| 关联性 | 技能互相引用 | 形成闭环 |
-
----
-
-## 十、维护与演进
-
-### 10.1 何时更新 Skills
-
-| 场景 | 更新内容 |
-|------|---------|
-| 技术栈变更 | 规范技能、地图技能 |
-| 新增模块 | 地图技能 |
-| 开发流程优化 | 流程技能 |
-| 发现系统性错误 | 相关技能 |
-
-### 10.2 更新流程
-
-```
-发现变更 → 评估影响 → 更新技能 → 验证 → 提交
-```
-
-### 10.3 版本管理
-
-**Commit 规范**:
-```
-feat(skills): {描述}
-fix(skills): {描述}
-docs(skills): {描述}
-```
-
-### 10.4 技能健康度检查
-
-定期检查（建议每季度）：
-
-- [ ] 技术栈是否过期
-- [ ] 目录结构是否与实际一致
-- [ ] 触发词是否还能匹配用户意图
-- [ ] 流程是否还能覆盖开发场景
-- [ ] 是否有新增场景需要覆盖
-- [ ] **模型等级标注是否正确**（L0/L1/L2/L3）
-- [ ] **技能声明已通过代码级验证**（13.2 节验证方法）
-- [ ] **CLAUDE.md 中的强制规则和索引是否同步**
-
-### 10.5 生命周期管理
-
-Skill 在创建后可能经历状态变化，建议通过 frontmatter 的 status 字段记录当前状态（见 4.1 节）：
-
-```
-draft → active → deprecated → (移除)
-                  ↓
-             superseded → 指向替代技能
-```
-
-| 状态 | 含义 | 操作 |
-|------|------|------|
-| `draft` | 创建中，未就绪 | 继续完善 |
-| `active` | 正常使用 | 定期复核 |
-| `deprecated` | 不再推荐使用 | 建议迁移到替代方案 |
-| `superseded` | 已被新 Skill 替代 | 配合 `supersededBy` 字段指向替代者 |
-
-**状态变更时机**：
-- 技术栈迁移或模块重构 → 原 Skill 标记 `deprecated`，新 Skill 标记 `active`
-- 发现更好的技能划分方式 → 旧技能标记 `superseded`，通过 `supersededBy` 指向新技能
-- reviewBy 日期到期但内容仍有效 → 更新日期即可，无需变更状态
-
----
-
----
-
-## 十一、模型分级路由（L0-L3）
-
-### 11.1 分级框架
-
-技能体系必须与模型分级路由耦合。不同复杂度的任务由不同模型处理，这是技能体系的核心效能保障。
-
-| 等级 | 标签 | 认知负载 | 推荐模型 | 典型任务 |
-|------|------|---------|---------|---------|
-| **L0** | 执行层 | 无（机械操作） | 轻量模型（Haiku） | 文件读取、信息查阅、命令执行、机械编辑 |
-| **L1** | 有界实现 | 低-中（窄范围） | 标准模型（Sonnet） | 单模块修改、格式修正、窄范围搜索 |
-| **L2** | 推理 | 中-高（多步骤） | 高能力模型（Sonnet/Opus） | 根因诊断、跨模块实现、验收审查 |
-| **L3** | 战略 | 高（架构级） | 顶级模型（Opus） | 架构决策、安全审计、系统重设计 |
-
-### 11.2 强制下放规则
-
-**L0 任务必须由轻量模型执行，主模型（L2+）不得直接处理 L0 任务。**
-
-理由：L0 是机械操作，在主模型中执行消耗 5-15x 的 token 成本，与轻量模型结果等价。
-
-| 任务类别 | 示例 | 下放目标 |
-|---------|------|---------|
-| 文件查找 | "入口文件在哪？"、"列目录" | L0 Haiku |
-| 信息查阅 | "框架版本？"、"读依赖配置" | L0 Haiku |
-| 命令执行 | "运行部署脚本"、"查服务状态" | L0 Haiku |
-| 静态追踪 | "画数据流图"、"核对API清单" | L0 Haiku |
-| 机械编辑 | "修改变量名"、"更新版本号" | L0 Haiku |
-
-**例外**：作为下游推理上下文的单文件内联读取，可由主模型直接做。其余一律下放。
-
-### 11.3 路由决策流程
-
-```
-任务到达
-  │
-  ▼
-评估复杂度 → 标记 L0/L1/L2/L3
-  │
-  ├─ L0 → 派轻量模型，目标固定，输出结构化
-  ├─ L1 → 主模型直接处理，或派标准模型
-  ├─ L2 → 主模型处理，可拆 L0 下沉
-  └─ L3 → 主模型深度处理（或升级模型）
-```
-
-### 11.4 在 openai.yaml 中标注模型等级
+### Workflow (workflow) — L1 / functional
 
 ```yaml
-interface:
-  display_name: "myproject-dev"
-  short_description: "L1 — 开发规范查询"
-  default_prompt: "Use $myproject-dev..."
-policy:
-  allow_implicit_invocation: false
-triggers:
-  - ...
+name: {project}-change-workflow
+description: {Project} development workflow. Triggered when describing dev requirements or asking about dev steps.
+model_tier: L1
+skill_tier: functional
 ```
+Required sections: Workflow overview (phase→input→steps→output), checklists
 
-在 description 的开头标注 `L0`/`L1`/`L2`/`L3`，使路由决策层可直接读取。
+### Change Model (change-model) — L1 / functional
 
-### 11.5 升级/兜底策略
+```yaml
+name: {project}-change-model
+description: Change report skill. Triggered when generating change reports, recording changes, or checking call chains.
+model_tier: L1
+skill_tier: functional
+```
+Required sections: WHY/WHAT/HOW/VALIDATION four-layer architecture, call-chain check template, archive path
+Reference: [skills/change-model/](skills/change-model/) · Quick start: [docs/quick-start.md](docs/quick-start.md)
 
-当任务执行陷入循环或用户持续不满意时，应触发升级机制，而非继续在低能力层级反复尝试。
+### Call-Chain (call-chain) — L1 / functional
 
-| 触发条件 | 阈值 | 动作 |
-|---------|------|------|
-| 用户多次不满意 | 同一任务 ≥2 轮修正未通过 | 打包上下文，升级至推理/顶级模型 |
-| 工作返工 | 同段代码被反复修改 ≥3 次，问题未收敛 | 停止修改，重新分析根因 |
-| 问题未收敛 | 3 轮对话后仍未缩小问题范围 | 升级至更高级模型重新诊断 |
+```yaml
+name: {project}-call-chain
+description: {Project} call-chain checking. Triggered when tracing API call chains, checking data flow, or verifying type matching.
+model_tier: L1
+skill_tier: functional
+```
+Required sections: Call-chain tracing method, data type checking, final-call checklist
 
-**升级信息包**（提供给推理/顶级模型）：
+### Scripts (scripts) — L0 / atomic
 
-1. 原始需求与用户所有反馈记录
-2. 已尝试方案及各自失败原因
-3. 当前代码状态与具体阻塞点
-4. 已排除的假设
+```yaml
+name: {project}-scripts
+description: {Project} script tools. Triggered when running maintenance scripts or batch operations.
+model_tier: L0
+skill_tier: atomic
+```
+Required sections: Script inventory table, execution flow, output report (JSON) format, error handling
 
-**原理**：低能力模型的反复尝试往往是同一思路的变体，无法突破认知瓶颈。升级模型带来全新分析视角，避免无限循环。
+### Delegation (delegation) — L1 / planning
+
+```yaml
+name: {project}-delegation
+description: Task decomposition & model routing. Triggered when needing delegation, task breakdown, or model dispatch.
+model_tier: L1
+skill_tier: planning
+```
+Required sections: 6 decomposition criteria, model tier routing table, 3 delegation patterns, output standards
+Reference: [skills/delegation/](skills/delegation/)
 
 ---
 
-## 十二、H-ADMC 主从编排模式
+## 6. Model Tier Routing
 
-> **H-ADMC = 拆解(H) → 派发(A) → 执行(D) → 整合(M) → 检查(C)**。一套标准化的主从任务编排流程：主模型将复杂任务拆解为子任务，按模型等级派发执行，整合结果并做最终验证。
+### Tier Framework
 
-### 12.1 核心原则
+| Tier | Cognitive Load | Model | Typical Tasks |
+|:----:|---------|---------|---------|
+| **L0** | None (mechanical) | Haiku | File lookup, info query, command execution |
+| **L1** | Low-Medium | Sonnet | Single-module changes, narrow search |
+| **L2** | Medium-High | Sonnet/Opus | Root cause diagnosis, cross-module implementation |
+| **L3** | High | Opus | Architectural decisions, security audits |
 
-**主模型编排。子模型执行。L0必须下放。**
+### Mandatory Delegation Rule
 
+**L0 tasks must be executed by lightweight models. Main model must not directly handle L0 tasks. One violation ≈ 5-15x token cost.**
+
+| Task Category | Example | Delegate To |
+|---------|------|---------|
+| File lookup | "Where is the entry file" | L0 Haiku |
+| Info query | "What framework version" | L0 Haiku |
+| Command exec | "Run deploy script" | L0 Haiku |
+| Static tracing | "Draw dataflow diagram" | L0 Haiku |
+| Mechanical edit | "Update version number" | L0 Haiku |
+
+Exception: Inline single-file reads as context for downstream reasoning may be done directly by the main model.
+
+### Upgrade / Fallback
+
+| Trigger | Threshold | Action |
+|---------|------|------|
+| User repeatedly unsatisfied | ≥2 correction rounds failed | Package context, upgrade model |
+| Work rework | Same code ≥3 modifications, not converging | Stop, re-analyze root cause |
+| Problem not converging | 3 rounds without narrowing scope | Upgrade to re-diagnose |
+
+---
+
+## 7. CLAUDE.md Integration
+
+CLAUDE.md is the root entry point for the skill system. Its role depends on where skills are stored:
+
+| Skill Path | Routing Table | Notes |
+|-------------|:--:|------|
+| `.claude/skills/` | **Optional** | Skills auto-loaded, routing table is documentation only |
+| `skills/` | **Required** | Only trigger path |
+
+### Version A: Skills in `.claude/skills/` (Recommended)
+
+```markdown
+# {Project Name}
+
+## Mandatory Delegation Rules (Highest Priority)
+
+> One violation ≈ 5-15x token cost. Main model must not execute L0 tasks.
+> All file ops, script execution, format conversion must delegate to Haiku.
+
+## Available Skills
+
+> Auto-loaded from `.claude/skills/`, supports `/skill-name` invocation.
+
+| Skill | Execution | Composition | Purpose |
+|------|:------:|:------:|------|
+| `{project}-dev` | L1 | atomic | Tech stack, standards |
+| `{project}-code-map` | **L0** | atomic | File location [delegate to Haiku] |
+| `{project}-change-model` | L1 | functional | Change reports, call-chain checks |
 ```
-主模型（高能力）
-  ├── 拆解 → 路由 → 派发
-  ├── 整合 → 冲突检测 → 再决策
-  └── 绝不执行 L0 工作
-        │
-        ├─ L0 子模型（轻量）：读、查、跑、验
-        ├─ L1 子模型（标准）：有界实现、窄搜索
-        └─ L2+ 主模型自身处理
+
+### Version B: Skills in `skills/` (Explicit Routing Required)
+
+```markdown
+# {Project Name}
+
+## Mandatory Delegation Rules (Highest Priority)
+
+> Main model must not execute L0 tasks.
+
+| Category | Criterion | Example |
+|------|---------|------|
+| File lookup | Purpose is path retrieval | "Where is the entry file" |
+| Info query | Purpose is a definite value | "Framework version" |
+| Command exec | Fixed steps, no branching | "One-click deploy" |
+
+## Skill Routing Table (Required — skills/ not auto-loaded)
+
+| Skill | Execution | Composition | Trigger Scenario |
+|------|:------:|:------:|----------|
+| [dev](skills/{project}-dev/) | L1 | atomic | Tech stack, code standards |
+| [code-map](skills/{project}-code-map/) | **L0** | atomic | File location [delegate to Haiku] |
 ```
 
-### 12.2 何时必须拆解
+---
 
-以下条件满足任意一条即必须拆解：
+## 8. H-ADMC Decomposition Criteria
 
-1. **多个子目标** — 任务包含超过一个不同目标
-2. **混合操作类型** — 任务同时需要分析和生成、实现和验证
-3. **无法单次闭环** — 无法在一个pass内完成并验证
-4. **风险隔离** — 独立验证可降低整体风险
-5. **并行机会** — 子任务可同时运行
-6. **L0子任务存在** — 非平凡任务几乎总是包含L0工作
+**H** = Decompose → **A** = Assign → **D** = Execute → **M** = Merge → **C** = Check
 
-### 12.3 约束注入模板
+Main model orchestrates. Sub-models execute. L0 must be delegated.
 
-每个派发的子Agent prompt必须包含以下约束：
+### Six Decomposition Criteria
+
+If ANY criterion is met, decomposition is mandatory:
+
+1. **Multiple sub-goals** — task contains >1 distinct goal
+2. **Mixed operation types** — requires both analysis and generation
+3. **Cannot close in one pass** — cannot complete + verify in one pass
+4. **Risk isolation** — independent verification reduces overall risk
+5. **Parallel opportunity** — sub-tasks can run concurrently
+6. **L0 sub-tasks present** — non-trivial tasks almost always contain L0 work
+
+### Sub-Agent Constraint Template
+
+Every dispatched sub-agent prompt must include:
 
 ```
 Constraints:
@@ -1707,685 +426,227 @@ Constraints:
 6. Use structured output format
 ```
 
-### 12.4 非收敛处理
-
-如果子Agent结果无法收敛，**不重复执行**。返回拆解层，改变任务结构（不同角度、不同工具、不同范围），重新拆解派发。
+Non-convergence handling: Do not repeat execution. Return to decomposition layer, change task structure, re-decompose and re-dispatch.
 
 ---
 
-## 十三、技能验证协议
+## 9. Sub-Agent Output Standards
 
-### 13.1 验证的必要性
-
-Skills 中的声明（文件路径、方法名、版本号、API路由）会随时间与代码脱节。**必须对每个验收清单项做代码级事实核查。**
-
-### 13.2 验证方法
-
-| 声明类型 | 验证方法 | 验证命令/方式 |
-|---------|---------|-------------|
-| 文件存在 | 检查文件系统 | `ls`、Glob工具 |
-| 类/方法名 | 读取源文件确认 | `grep -n "class Xxx"` |
-| 版本号 | 读取依赖配置/包管理文件 | 直接读文件 |
-| 路由声明 | 读取路由配置/入口文件注解 | 读入口文件 |
-| 目录结构 | 遍历目录树 | `find`、Glob工具 |
-| 脚本命令 | 检查脚本文件内容 | 读脚本文件 |
-
-### 13.3 验收标准
+All dispatched sub-agents must return in this structured format. Free-form narration is forbidden:
 
 ```
-文件路径验证通过率： ≥ 95%
-方法名映射准确率：   ≥ 90%
-版本号准确率：       100%
-API 路由准确率：     ≥ 90%
+Conclusion: (One sentence answering the assigned goal)
+Basis: (Specific evidence, observations, reasoning path)
+Uncertainty: (Risks, missing info, failure modes; write "None" if none)
 ```
 
-低于此标准的技能不得发布。
+Main agent integration: extract conclusions → identify conflicts → advance decision. Main agent must not perform local reasoning on behalf of sub-agents.
 
-### 13.4 定期验证
-
-| 时机 | 验证范围 |
-|------|---------|
-| 创建时 | 全部声明 |
-| 代码重构后 | 受影响技能 |
-| 季度检查 | 全部技能 |
-| 用户报告误差 | 相关技能 |
-
-### 13.5 验证记录
-
-每次验证结果应记录为结构化报告：
+Standard dispatch format:
 
 ```
-技能名: myproject-code-map
-验证日期: 2026-04-25
-通过率: 92%
-不匹配项:
-  - getPrice() → 实际为 quotePrice()
-  - /api/balance 声明GET → 实际为 POST
-```
-
----
-
-## 十四、子Agent输出标准
-
-### 14.1 强制输出格式
-
-所有派发的子Agent必须按以下结构化格式返回，禁止自由叙述：
-
-```
-Conclusion: (一句话回答分配的目标)
-Basis: (具体证据、观察或推理路径)
-Uncertainty: (风险、缺失信息或失败模式；若无则写 "None")
-```
-
-### 14.2 主Agent整合规则
-
-主Agent收到子Agent结果后只做三件事：
-
-1. **提取结论** — 从每个子Agent的结果中提取 usable conclusion
-2. **识别冲突** — 跨子Agent结果识别矛盾或缺口
-3. **推进决策** — 决定：继续执行、重新拆解、或完成
-
-**主Agent不得替代子Agent进行局部推理。**
-
-### 14.3 派发命令标准格式
-
-```bash
 Agent(
-  description: "3-5词描述任务",
+  description: "3-5 word task description",
   model: "haiku",
   prompt: """
-    【任务】具体要做什么
-    【文件】需要读取的路径列表
-    【输出要求】按 Conclusion/Basis/Uncertainty 格式返回
+    【Task】What specifically to do
+    【Files】List of paths to read
+    【Output】Return in Conclusion/Basis/Uncertainty format
   """
 )
 ```
 
 ---
 
-## 十五、分治驱动层技能
+## 10. Validation Protocol
 
-### 15.1 概念
+### Validation Commands
 
-除业务技能外，应创建一个**元技能**用于管理分治规则本身。这个技能不面向项目业务，而是面向 Agent 编排。
+```bash
+# Format + structure validation (supports both paths)
+python scripts/validate-skills.py .claude/skills/{skill-name}
+python scripts/validate-skills.py skills/{skill-name}
 
-**本项目实现**：详见 `skills/delegation/SKILL.md` — 基于 H-ADMC 精简适配的实用分治规则。
+# Semantic validation
+python scripts/validate-skills.py .claude/skills/{skill-name} --semantic
+```
 
-**模板供参考**：`skills/example-delegation/SKILL.md` — 供其他项目参照创建。
+### Acceptance Criteria (Hard)
 
-### 15.2 分治技能的目录结构
+| Declaration Type | Verification Method | Pass Rate |
+|---------|---------|:---:|
+| File paths | Glob/Read to confirm existence | ≥95% |
+| Method names | Grep source code to confirm | ≥90% |
+| Version numbers | Read dependency config files | 100% |
+| API routes | Read route config to confirm | ≥90% |
+
+Below standard = must not publish. Agent must code-level fact-check every acceptance item — verify each declaration with tools, not by trusting document content.
+
+### Periodic Verification
+
+| Timing | Scope |
+|------|---------|
+| At creation | All declarations |
+| After refactor | Affected skills |
+| Quarterly | All skills |
+
+---
+
+## 11. Delegation Engine
+
+The delegation skill is a meta-skill managing main/sub model division of labor. It does not participate directly in business development.
 
 ```
 skills/delegation/
-├── SKILL.md                    # 分治规则：拆解原则、模型路由、分治模式、输出规范
+├── SKILL.md                    # Decomposition principles, model routing, patterns, output standards
 ├── agents/
-│   └── openai.yaml             # 触发词：分治、拆解任务、模型下放、L0、H-ADMC
-└── references/                 # （可选）详细参考规范
+│   └── openai.yaml             # Triggers: delegation, task breakdown, model dispatch, L0, H-ADMC
+└── references/
 ```
 
-### 15.3 SKILL.md 核心章节
+Core triggers: delegation, task breakdown, model dispatch, model tier, L0 tasks, dispatch to Haiku, sub-agent, H-ADMC
 
-| 章节 | 内容 |
-|------|------|
-| 核心原则 | 主从编排、L0 默认下放的三句话原则 |
-| 模型分级路由 | L0-L3 等级表与下放建议 |
-| 拆解判断标准 | 六条标准（多目标/混合类型/无法闭环/风险隔离/并行/L0存在） |
-| 子任务设计 | 一目标一验证、最小依赖的设计规范 |
-| 分治模式 | 信息收集/并行批量/复杂调查三种模式 |
-| 输出规范 | 结论/依据/不确定性三要素格式 |
-| 整合规则 | 提取结论→识别冲突→推进决策 |
-
-### 15.4 触发词设计
-
-```yaml
-triggers:
-  - 分治
-  - 拆解任务
-  - 模型下放
-  - 模型等级
-  - 模型路由
-  - L0 任务
-  - L1 任务
-  - 派 Haiku
-  - 子Agent
-  - 该不该下放
-  - 任务分级
-  - H-ADMC
-```
-
-### 15.5 全局 vs 项目级
-
-- **全局分治技能**：放在 `~/.claude/skills/delegation/`，所有项目共享
-- **项目级分治规则**：写在项目 `CLAUDE.md` 的强制规则区块
-- **建议组合使用**（双层约束）
+Deployment: Global delegation skill in `~/.claude/skills/delegation/`. Project-level rules in CLAUDE.md mandatory block. Dual-layer combination recommended.
 
 ---
 
-## 十六、CLAUDE.md 集成
+## 12. Script Directory
 
-### 16.1 CLAUDE.md 作为根入口
+Skills may include executable scripts for automating repetitive operations:
 
-CLAUDE.md 是技能体系的根入口，所有技能引用和强制规则应在此处聚合。
+```
+.claude/skills/{skill-name}/scripts/     # or skills/{skill-name}/scripts/
+├── deploy.sh
+└── health-check.sh
+```
 
-### 16.2 标准结构
+Script execution rules:
+- Executed by L0 sub-model (Haiku)
+- Output structured results (JSON or Conclusion/Basis/Uncertainty)
+- **Never** inline script content in SKILL.md (reference path only)
 
-```markdown
-# {项目名} 项目总纲
+Use cases: verify declarations, manage environments, package & distribute, automated testing.
 
 ---
 
-## 强制分治规则（优先级最高）
+## 13. Maintenance & Evolution
 
-> **违反本规则一次 ≈ 多付 5-15x token 成本。主模型不得执行 L0 任务。**
+### When to Update
 
-| 类别 | 判断标准 | 示例 |
-|------|---------|------|
-| 文件查找 | 目的是获取路径 | "查入口文件在哪" |
-| 信息查阅 | 目的是获取确定值 | "框架版本号" |
-| 命令执行 | 固定步骤无分支 | "一键部署" |
+| Scenario | Update |
+|------|---------|
+| Tech stack change | Standards skill, code-map skill |
+| New module added | Code-map skill |
+| Workflow optimization | Workflow skill |
+| Systematic errors found | Related skills |
 
-## 技能体系索引
+Update flow: detect change → assess impact → update skills → validate → commit
 
-| 技能 | 模型等级 | 用途 |
-|------|---------|------|
-| `myproject-dev` | **L1 — Sonnet** | 技术栈、规范 |
-| `myproject-code-map` | **L0 — Haiku** | 文件定位 |
-
-## 模型分级治理
+### Lifecycle
 
 ```
-主模型 (Sonnet/Opus)
-├── T3 执行层 (Haiku)     → code-map, scripts
-├── T2 常规层 (Sonnet)    → dev, workflow
-├── T1 推理层 (Sonnet)    → call-chain
-└── T0 超高层 (Opus)     → 架构决策 (预留)
-```
+draft → active → deprecated → (removed)
+                  ↓
+             superseded → point to replacement
 ```
 
-### 16.3 三要素
+Status in frontmatter `status` field. Superseded skills use `supersededBy` to point to replacement.
 
-CLAUDE.md 作为技能入口必须具备：
+### Quarterly Health Check
 
-1. **强制分治规则** — 顶部放置，优先级高于一切
-2. **技能索引** — 引用所有 skills/ 下的技能并标注模型等级
-3. **快速参考** — 常用命令和关键文件
+- [ ] Tech stack still current
+- [ ] Directory structure matches reality
+- [ ] Trigger words still match user intent
+- [ ] Workflow still covers dev scenarios
+- [ ] Model tier annotations correct
+- [ ] Declarations pass code-level verification
 
 ---
 
-## 十七、技能内脚本目录
+## 14. Packaging & Distribution
 
-### 17.1 目录结构
+### Path Summary
 
-技能可以包含可执行脚本，用于自动化重复性操作：
+| Path | Purpose | Auto-Load |
+|------|------|:---:|
+| `{project}/.claude/skills/` | Production project skills | ✅ |
+| `{project}/skills/` | Template/methodology reference | ❌ |
+| `~/.claude/skills/` | Global cross-project skills | ✅ |
+| `~/.claude/skills-dist/` | Zip archive repository | — |
 
-```
-skills/myproject-scripts/
-├── SKILL.md
-├── agents/openai.yaml
-└── scripts/                  # 技能附带的工具脚本
-    ├── deploy.sh
-    └── health-check.sh
-```
-
-### 17.2 适用场景
-
-| 场景 | 示例 |
-|------|------|
-| 技能需要调用工具验证声明 | 验证skills文档中的文件路径是否存在 |
-| 技能管理运行环境 | conda环境检查、Python包安装 |
-| 技能需要打包分发 | zip打包、解压脚本 |
-| 技能包含自动化测试 | 端到端验证脚本 |
-
-### 17.3 脚本执行规则
-
-```
-skills/*/scripts/ 下的脚本：
-  - 由 L0 子模型 (Haiku) 执行
-  - 输出结构化结果 (JSON 或 Conclusion/Basis/Uncertainty)
-  - 不得在 SKILL.md 中内联脚本内容（引用路径即可）
-```
-
----
-
-## 十八、技能打包与分发
-
-### 18.1 打包格式
-
-技能目录可打包为 `.zip` 存档，用于分发或备份：
+### Install Commands
 
 ```bash
-# 从技能目录创建 zip，保留顶层目录名
+# Package
 zip -r my-skill.zip my-skill/
 
-# 验证
-unzip -l my-skill.zip
-```
-
-### 18.2 全局仓库目录
-
-统一存档目录：`~/.claude/skills-dist/`
-
-```
-~/.claude/skills-dist/
-├── my-skill.zip
-├── another-skill.zip
-└── SKILL-BUILDER-GUIDE.md    # 本指南
-```
-
-### 18.3 安装到全局技能目录
-
-```bash
-# 解压到全局技能目录
+# Install globally
 python scripts/zip_extract.py my-skill.zip ~/.claude/skills/ my-skill
-```
 
-### 18.4 全局 vs 项目级技能对比
-
-| 属性 | 全局技能 | 项目级技能 |
-|------|---------|-----------|
-| 存放位置 | `~/.claude/skills/` | `{project}/skills/` |
-| 生效范围 | 所有会话 | 仅该项目 |
-| 适用场景 | 通用规则（分治、工程规范） | 项目专属信息（代码地图、API规范） |
-| 生命周期 | 长期有效 | 随项目演进 |
-| 更新方式 | 手动更新 | 与代码同步更新 |
-
-**建议组合**：全局技能放方法论（delegation、skill-builder-guide），项目技能放业务知识（dev、code-map）。
-
----
-
-## 附录：模板索引
-
-| 模板 | 等级 | 适用技能 | 模板位置 |
-|------|:----:|---------|---------|
-| 规范技能模板 | L1 | dev/spec | 8.1 节 |
-| 地图技能模板 | **L0** | code-map | 8.2 节 |
-| 流程技能模板 | L1 | workflow | 8.3 节 |
-| 调用链技能模板 | L1 | call-chain | 8.4 节 |
-| 脚本技能模板 | L0 | scripts | 8.5 节 |
-| 变更日志模板 | L1 | diffs | 8.6 节 |
-| 变更模型模板 | L1 | change-model | 8.7 节 / skills/change-model/ |
-| 分治驱动模板 | L1 | delegation | 15.2 节 |
-| CLAUDE.md 集成模板 | — | root | 16.2 节 |
-
----
-
-## 附录：技能类型快速选择
-
-| 项目特征 | 推荐技能组合 | 说明 |
-|---------|-------------|------|
-| 简单前端项目 | 规范 + 流程 | 基础开发指引 |
-| 复杂前端项目 | 规范 + 地图 + 流程 | 需要文件导航 |
-| 简单后端项目 | 规范 + 流程 + 脚本 | 需要运维脚本 |
-| 复杂后端项目 | 规范 + 流程 + 脚本 + 调用链 | 需要数据流追踪 |
-| 全栈项目 | 规范 + 地图 + 流程 + 变更模型 + 分治 | 需要变更管理 |
-| 微服务项目 | 规范 + 流程 + 调用链 + 变更模型 + 分治 | 需要跨服务追踪 |
-| 国密/高安全项目 | 规范 + 地图 + 流程 + 脚本 + 调用链 + 分治 | 需要完整覆盖 |
-
-### 按场景推荐
-
-| 场景 | 推荐技能 | 原因 |
-|------|----------|------|
-| 新人入职 | 地图 + 流程 | 快速了解项目结构 |
-| 日常开发 | 规范 + 地图 | 查规范、定位文件 |
-| 变更发布 | 变更模型 + 调用链 | 结构化变更报告 |
-| 问题排查 | 调用链 + 规范 | 追踪数据流 |
-| 性能优化 | 规范 + 调用链 | 定位瓶颈 |
-
----
-
-## 附录：实践指南
-
-### A1. 已有项目导入 Skills 的步骤
-
-**适用场景**: 为现有项目创建 Skills，不是从零开始
-
-```
-① 项目分析 → ② 差距分析 → ③ 技能创建 → ④ 验证迭代
-```
-
-**步骤一：项目分析**
-1. 识别项目类型（全栈/微服务/前端-only/后端-only）
-2. 统计技术栈（框架、语言、数据库、中间件）
-3. 梳理模块结构（业务模块、技术模块）
-4. 评估团队规模（单人/团队）
-
-**步骤二：差距分析**
-1. 对照「技能类型快速选择」表，确定目标技能组合
-2. 检查现有 Skills 目录（如已存在）
-3. 列出缺失的技能
-4. 评估创建优先级
-
-**步骤三：技能创建**
-1. 按本指南模板创建各技能
-2. 确保技能间互相引用
-3. 更新 README.md 和 CLAUDE.md
-
-**步骤四：验证迭代**
-1. 测试 Slash 命令触发
-2. 测试自然语言触发
-3. 邀请团队成员试用
-4. 根据反馈迭代
-
-### A2. 变更开发标准流程
-
-**适用场景**: 使用变更模型技能进行开发
-
-```
-需求到达 → WHY → HOW → VALIDATION → 交付
-```
-
-**阶段一：WHY — 需求分析**
-1. 变更背景：需求来源、触发原因、期望目标
-2. 需求分析：判断逻辑、业务约束
-3. 输出：需求分析文档
-
-**阶段二：HOW — 设计与实现**
-1. 查技术栈/规范 → 触发 dev 技能（L1）
-2. 查文件位置 → 触发 code-map 技能（**L0 派 Haiku**）
-3. 设计方案：调用链路、数据模型、API定义
-4. 编码实现
-
-**阶段三：VALIDATION — 验证**
-1. **调用链检查**（测试前）→ change-model §4
-   - 入口参数验证
-   - 类型匹配检查
-   - 最终调用验证
-   - 错误处理检查
-2. 测试验证
-3. 生成变更报告
-
-**阶段四：交付与回滚**
-1. Git 提交记录
-2. 回滚方案
-
-### A3. 开发规范技能初始化
-
-**适用场景**：为项目创建开发规范技能时，需要进行代码分层扫描
-
-**核心原则**：开发规范技能不是直接复制模板，而是通过扫描项目代码，识别已有的标准写法和兼容写法，形成项目专属的编码风格文档。
-
-#### 初始化流程
-
-```
-① 项目分析 → ② 代码扫描 → ③ 风格提取 → ④ 文档生成 → ⑤ 用户确认
-```
-
-**阶段一：项目分析**
-
-分析内容：
-1. 项目类型（{单体应用/微服务/前后端分离/...}）
-2. 技术栈（{语言}、{框架}、{数据库}）
-3. 模块划分（{业务模块}、{技术模块}）
-
-**阶段二：代码扫描（派 Haiku — L0 任务）**
-
-扫描内容：
-
-| 层级 | 扫描目标 | 扫描内容 |
-|------|----------|----------|
-| **接口层** | 入口文件/路由配置 | 参数校验方式、响应封装类、异常处理方式 |
-| **业务层** | 业务逻辑文件 | 一致性管理、接口抽象、参数转换方式 |
-| **数据层** | 数据访问文件 | 持久化方式、查询组织、分页方式 |
-| **集成层** | 远程调用/消息/定时任务 | 容错处理、超时配置、重试策略 |
-
-**阶段三：风格提取**
-
-提取内容：
-1. **标准写法识别**：各层的主流写法模式
-2. **兼容写法识别**：历史遗留或特殊场景的写法
-3. **命名规范提取**：文件命名、方法命名、变量命名的习惯
-4. **目录结构提取**：目录组织、模块划分方式
-
-**阶段四：文档生成**
-
-生成内容：
-1. SKILL.md（开发规范文档）
-   - 技术栈版本
-   - 分层架构说明
-   - 各层标准写法示例
-   - 命名规范
-   - 兼容写法说明
-2. agents/openai.yaml（触发配置）
-
-**阶段五：用户确认**
-
-确认内容：
-1. 技术栈版本是否正确
-2. 标准写法是否符合预期
-3. 兼容写法原因是否准确
-4. 是否有补充文档需要合并
-
-#### 用户文档合并
-
-如果用户提供编码规范文档：
-
-```
-1. 读取用户文档
-2. 与扫描结果对比
-3. 以用户文档为准，补充扫描发现的实际情况
-4. 记录差异项，供用户确认
-```
-
-#### 代码分层检查清单
-
-**接口层检查**：
-
-| 检查项 | 检查内容 | 记录格式 |
-|--------|----------|----------|
-| 响应封装 | 统一响应结构 | `{响应类/函数名}` |
-| 参数校验 | 校验方式（声明式/手动/中间件） | `{方式}` |
-| 异常处理 | 错误处理方式（全局/局部） | `{方式}` |
-| API 文档 | 文档生成方式 | `{工具/无}` |
-
-**业务层检查**：
-
-| 检查项 | 检查内容 | 记录格式 |
-|--------|----------|----------|
-| 一致性管理 | 事务/一致性配置方式 | `{方式}` |
-| 抽象接口 | 是否有接口/协议/基类定义 | `{有/无}` |
-| 参数转换 | 模型转换方式 | `{方式}` |
-
-**数据层检查**：
-
-| 检查项 | 检查内容 | 记录格式 |
-|--------|----------|----------|
-| 持久化方式 | ORM / 原始查询 / 查询构造器 | `{方式}` |
-| 查询组织 | 查询存放方式（内联/独立文件/注解） | `{方式}` |
-| 分页方式 | 分页策略（框架内置/插件/手动） | `{方式}` |
-
-**集成层检查**：
-
-| 检查项 | 检查内容 | 记录格式 |
-|--------|----------|----------|
-| 远程调用 | 服务间通信方式 | `{方式列表}` |
-| 消息处理 | 消息队列使用方式 | `{生产/消费/两者}` |
-| 定时任务 | 任务调度方式 | `{方式}` |
-
-### A4. 技能冲突处理
-
-**问题**: 多个技能的触发词重叠，导致不确定调用哪个
-
-**裁决规则**（按优先级从高到低）：
-
-| 优先级 | 条件 | 示例 |
-|--------|------|------|
-| 1 | 项目特定 Skill > 通用 Skill | `myproject-dev` > 全局 `skill-builder-guide` |
-| 2 | 声明为 `required` 的规则 > `recommended` | CLAUDE.md 强制规则 > 技能建议 |
-| 3 | 更精确的触发词匹配 > 宽泛匹配 | "新增页面" > "开发" |
-| 4 | active 状态的 Skill > deprecated | 有效 Skill 优先 |
-| 5 | 最近更新的 Skill > 更早的 | 按更新时间裁决 |
-
-**冲突时的处理方法**:
-
-1. **触发词精确度**: 使用更精确的触发词避免歧义
-   - ❌ `开发` → 可能触发 dev 或 workflow
-   - ✅ `新增页面` → 明确指向 workflow
-
-2. **技能内排序**: 在 openai.yaml 中按具体程度排列 triggers
-   - 更具体的触发词放前面
-   - 更通用的触发词放后面
-
-3. **跨项目隔离**: 项目级 Skill 放在项目 `skills/` 目录下，全局 Skill 放在 `~/.claude/skills/`，通过目录隔离避免冲突
-
-### A5. 技能版本管理
-
-**原则**: Skills 使用 Semantic Versioning
-
-| 版本格式 | 说明 | 适用场景 |
-|---------|------|---------|
-| MAJOR.MINOR.PATCH | 主版本.次版本.补丁版本 | Skills 整体版本 |
-| v1.0.0 | 首次发布 | — |
-| v1.1.0 | 新增内容（向后兼容） | 新增章节/模板 |
-| v1.0.1 | Bug 修复（向后兼容） | 修正错误 |
-| v2.0.0 | Breaking Changes | 重写技能 |
-
-**版本标注**:
-
-在 SKILL.md 的 frontmatter 中添加 version 字段：
-
-```yaml
----
-name: myproject-dev
-description: ...
-version: 1.1.0
-updatedAt: 2026-04-25
----
-```
-
-### A6. 技能废弃流程
-
-**何时废弃**:
-- 项目技术栈变更，旧技能不再适用
-- 技能内容严重过时，无法维护
-- 技能功能已被其他技能合并
-
-**废弃流程**:
-
-```
-① 标记废弃 → ② 公告过渡 → ③ 移除技能
-```
-
-**步骤一：标记废弃**
-1. 在 SKILL.md 顶部添加 DEPRECATED 标记
-2. 说明废弃原因和替代技能
-
-```markdown
-> ⚠️ **已废弃**: 此技能已被 `new-skill-name` 替代。
-> - 废弃版本: v1.0.0
-> - 替代技能: [new-skill-name](../new-skill-name/SKILL.md)
-```
-
-**步骤二：公告过渡**
-1. 在 README.md 中标记为「已废弃」
-2. 给予至少 2 周的过渡期
-3. 通知团队成员
-
-**步骤三：移除技能**
-1. 删除技能目录
-2. 更新 README.md
-3. 更新其他技能的关联引用
-
-### A7. 技能测试方法
-
-**测试类型**:
-
-| 测试类型 | 测试方法 | 验证内容 |
-|---------|---------|---------|
-| 触发测试 | 使用触发词调用技能 | 技能能被正确触发 |
-| 内容测试 | 检查技能内容准确性 | 技术栈、目录与实际一致 |
-| 引用测试 | 检查技能间引用 | 引用关系形成闭环 |
-| 流程测试 | 模拟开发场景 | 流程可完整执行 |
-
-**测试检查清单**:
-
-```markdown
-## 技能测试清单
-
-### 触发测试
-- [ ] Slash 命令 `/skill-name` 可触发
-- [ ] 自然语言触发词可触发
-- [ ] 触发词无歧义，不会误触发其他技能
-
-### 内容测试
-- [ ] 技术栈版本与实际一致
-- [ ] 目录结构与实际一致
-- [ ] 模板代码可直接使用
-- [ ] 无过期内容
-
-### 引用测试
-- [ ] 所有关联技能引用存在
-- [ ] 无死链接（引用目标文件存在）
-- [ ] 引用关系形成闭环
-
-### 流程测试
-- [ ] 开发流程可完整执行
-- [ ] 检查清单覆盖关键节点
-- [ ] 模板可作为参考指南
-```
-
-### A8. 多技能协作模式
-
-**场景**: 一个需求需要多个技能配合
-
-**模式一：串行调用**
-```
-用户: "开发一个用户模块"
-→ llangfull-change-workflow (流程引导)
-  → llangfull-dev (查询规范)
-    → llangfull-code-map (定位文件)
-```
-
-**模式二：并行调用**
-```
-用户: "分析这个功能的调用链"
-→ llangfull-call-chain (调用链检查)
-  + llangfull-code-map (并行获取文件位置)
-```
-
-**模式三：循环改进**
-```
-开发过程中发现问题
-→ llangfull-dev (确认规范)
-  → llangfull-change-workflow (修正流程)
-    → llangfull-code-map (确认位置)
-      → 重新开发
+# Install to project (production)
+cp -r my-skill/ {project}/.claude/skills/my-skill/
 ```
 
 ---
 
-## 附录：核查清单
+## Appendix: Template Index
 
-创建或更新 Skills 时，对照本清单检查：
+| Template | Tier | Reference |
+|------|:----:|---------|
+| Standards (dev) | L1 / atomic | `skills/example-dev/` · §5 |
+| Code Map (code-map) | **L0** / atomic | `skills/example-code-map/` · §5 |
+| Workflow (workflow) | L1 / functional | Main guide §8.3 template |
+| Change Model (change-model) | L1 / functional | `skills/change-model/` · §5 · `docs/quick-start.md` |
+| Call-Chain (call-chain) | L1 / functional | §5 · Main guide §8.4 template |
+| Scripts (scripts) | L0 / atomic | §5 · Main guide §8.5 template |
+| Delegation (delegation) | L1 / planning | `skills/delegation/` · §11 |
+| CLAUDE.md | — | §7 |
 
-### 完整性检查
-- [ ] 所有技能都有 SKILL.md 和 agents/openai.yaml
-- [ ] frontmatter 完整（name, description）
-- [ ] 触发词数量在 5-15 之间
-- [ ] 触发词覆盖操作类和询问类
-- [ ] 技能间互相引用
-- [ ] openai.yaml description 标注了模型等级（L0/L1/L2/L3）
-- [ ] 已创建分治驱动技能或已在 CLAUDE.md 中声明强制分治规则
+---
 
-### 准确性检查
-- [ ] 技术栈版本与实际一致
-- [ ] 目录结构与实际一致
-- [ ] 模板代码无语法错误
-- [ ] 无过时的配置或路径
-- [ ] **声明已通过代码级验证**（参考第13章验证协议）
+## Appendix: Skill Quick Select
 
-### 模型路由检查
-- [ ] 每个技能标注了 L0/L1/L2/L3 等级
-- [ ] L0 技能明确声明为 "必须由 Haiku 执行"
-- [ ] CLAUDE.md 中包含了强制分治规则区块
-- [ ] 子Agent输出格式已标准化为 Conclusion/Basis/Uncertainty
+| Project Profile | Recommended Combo |
+|---------|-------------|
+| Simple frontend | standards + workflow |
+| Complex frontend | standards + code-map + workflow |
+| Simple backend | standards + workflow + scripts |
+| Complex backend | standards + workflow + scripts + call-chain |
+| Full-stack | standards + code-map + workflow + change-model + delegation |
+| Microservices | standards + workflow + call-chain + change-model + delegation |
 
-### 可用性检查
-- [ ] Slash 命令可触发
-- [ ] 自然语言可触发
-- [ ] 流程可完整执行
-- [ ] 模板可直接使用
+| Scenario | Recommended Skills |
+|------|----------|
+| New hire onboarding | code-map + workflow |
+| Daily development | standards + code-map |
+| Change release | change-model + call-chain |
+| Issue investigation | call-chain + standards |
 
-### 维护性检查
-- [ ] 已在 frontmatter 中添加 version
-- [ ] 已在 README.md 中列出
-- [ ] 更新记录已记录
+---
+
+## Appendix: Practice Quick Reference
+
+### Import Steps for Existing Projects
+
+```
+① Analyze → ② Gap analysis → ③ Create skills → ④ Validate & iterate
+```
+
+1. Analyze: Identify project type, tech stack, module structure, team size
+2. Gap: Check against quick-select table, inspect `.claude/skills/` and `skills/`
+3. Create: Choose deployment path per §3 (production→`.claude/skills/`), generate per §5 templates
+4. Validate: Test slash commands + natural language triggers, invite team trial
+
+### Conflict Resolution
+
+When multiple skill triggers overlap: project-specific > generic · `required` > `recommended` · exact match > broad match · `active` > `deprecated`
+
+### Version Management
+
+Semantic Versioning: MAJOR.MINOR.PATCH. Commit: `feat|fix|docs(skills): {description}`
+
+### Security Red Lines
+
+- Code examples in skill files must be sanitized (IPs, passwords, tokens → placeholders)
+- Reference project skills (e.g. `skills/example-dev/`) must not contain original project sensitive info
+- Main model L2+ must not directly execute L0 tasks

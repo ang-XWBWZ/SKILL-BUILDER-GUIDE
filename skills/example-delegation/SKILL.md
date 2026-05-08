@@ -1,8 +1,9 @@
 ---
 name: example-delegation
 description: >-
-  分治规则技能模板。用于指导创建项目专属的分治规则。
-  定义哪些任务必须下放 Haiku、下放格式、子Agent输出规范。
+  Delegation rules skill template. Used to guide creation of project-specific
+  delegation rules. Defines which tasks must be delegated to Haiku,
+  delegation format, and sub-agent output standards.
 model_tier: L1
 skill_tier: atomic
 composes: []
@@ -26,77 +27,77 @@ evolution:
   stale_markers: []
 ---
 
-# 分治规则技能模板
+# Delegation Rules Skill Template
 
-> **定位**: Atomic 层 / L1 执行层——供其他项目参照创建项目级分治规则的**指南模板**。被 [skill-builder-guide](../skill-builder-guide/SKILL.md) (meta) 编排调用。
+> **Position**: Atomic tier / L1 execution tier — a **reference template** for other projects to create project-level delegation rules. Composed by [skill-builder-guide](../skill-builder-guide/SKILL.md) (meta).
 >
-> **完整实现**: 本项目实际使用的分治技能见 [delegation](../delegation/SKILL.md) (planning 层)。
+> **Full implementation**: See [delegation](../delegation/SKILL.md) (planning tier) for this project's actual delegation skill.
 >
-> **深入参考**: 升级策略细节见 [references/upgrade-strategy.md](references/upgrade-strategy.md)。
+> **Deep reference**: See [references/upgrade-strategy.md](references/upgrade-strategy.md) for upgrade strategy details.
 
-## 触发条件
+## Trigger Conditions
 
-- 创建分治规则技能 / 定义 L0 任务下放规则
-- 询问"这个任务该不该下放"
-- 需要分治规则模板参考
+- Creating delegation rules skill / Defining L0 task delegation rules
+- Asking "should this task be delegated"
+- Need delegation rules template reference
 
-## 关联技能
+## Related Skills
 
-- [分治驱动](../delegation/SKILL.md) — 本项目实际使用的 planning 层分治技能
-- [开发规范](../example-dev/SKILL.md) — L0 信息查阅场景
-- [代码地图](../example-code-map/SKILL.md) — L0 文件定位场景 [L0]
+- [Delegation](../delegation/SKILL.md) — actual planning-tier delegation skill used by this project
+- [Dev Standards](../example-dev/SKILL.md) — L0 info lookup scenarios
+- [Code Map](../example-code-map/SKILL.md) — L0 file location scenarios [L0]
 
 ---
 
-## 一、强制分治原则
+## 1. Mandatory Delegation Principle
 
-**主模型不得执行 L0 任务。** 所有 L0 任务必须通过 `Agent(model: "haiku")` 下放。
+**Main model must not execute L0 tasks.** All L0 tasks must be delegated via `Agent(model: "haiku")`.
 
-## 二、L0 任务清单
+## 2. L0 Task Catalog
 
-| 类别 | 任务举例 | 目标技能 |
+| Category | Example Tasks | Target Skill |
 |------|---------|---------|
-| 文件查找 | 查文件在哪、目录结构 | code-map |
-| 信息查阅 | 查版本号、API 路由 | dev |
-| 命令执行 | 部署、打包、服务启停 | scripts |
-| 静态追踪 | 画数据流图、核对API清单 | code-map / dev |
-| 机械编辑 | 修改变量名、更新版本号 | (直接操作) |
+| File lookup | Find file location, directory structure | code-map |
+| Info lookup | Check version number, API routes | dev |
+| Command execution | Deploy, package, service start/stop | scripts |
+| Static tracing | Draw dataflow diagram, verify API list | code-map / dev |
+| Mechanical edit | Rename variable, update version number | (direct) |
 
-## 三、下放标准格式
+## 3. Standard Delegation Format
 
 ```
 Agent(
-  description: "3-5词描述任务",
+  description: "3-5 word task description",
   model: "haiku",
   prompt: """
-    【任务】具体要做什么
-    【文件】需要读取的路径列表
-    【输出要求】Conclusion/Basis/Uncertainty 格式
+    【Task】What specifically to do
+    【Files】List of paths to read
+    【Output】Conclusion/Basis/Uncertainty format
   """
 )
 ```
 
-## 四、子Agent输出格式
+## 4. Sub-Agent Output Format
 
 ```
-结论 (Conclusion):   一句话回答分配的目标
-依据 (Basis):        具体证据、观察、推理路径
-不确定性 (Uncertainty): 风险、缺失信息、失败模式（无则写"无"）
+Conclusion:   One sentence answering the assigned goal
+Basis:        Specific evidence, observations, reasoning path
+Uncertainty:  Risks, missing information, failure modes (write "None" if none)
 ```
 
-主模型收到后只做三件事：提取结论 → 识别冲突 → 决策。
+Main model does only three things after receiving: extract conclusions → identify conflicts → decide.
 
-## 五、升级/兜底策略
+## 5. Upgrade / Fallback Strategy
 
-| 触发条件 | 阈值 | 动作 |
+| Trigger | Threshold | Action |
 |---------|------|------|
-| 用户多次不满意 | 同一任务 ≥2 轮修正未通过 | 打包上下文，提交顶级模型 |
-| 工作返工 | 同段代码反复修改，问题未收敛 | 停止修改，重新分析根因 |
+| User repeatedly unsatisfied | Same task ≥2 correction rounds failed | Package context, submit to top-tier model |
+| Work rework | Same code repeatedly modified, problem not converging | Stop modifying, re-analyze root cause |
 
-**升级信息包**：原始需求 + 已尝试方案及失败原因 + 当前阻塞点 + 已排除假设。
+**Upgrade info package**: Original requirements + attempted solutions and failure reasons + current blockers + excluded assumptions.
 
-详见 [references/upgrade-strategy.md](references/upgrade-strategy.md)。
+See [references/upgrade-strategy.md](references/upgrade-strategy.md).
 
-## 六、模型等级
+## 6. Model Tier
 
-**L1 — Sonnet / atomic tier**：规则解释与编排，需推理判断。本技能为模板参考，实际执行参考 [delegation](../delegation/SKILL.md)。
+**L1 — Sonnet / atomic tier**: Rule interpretation and orchestration, requires reasoning. This skill is a template reference. See [delegation](../delegation/SKILL.md) for actual execution.

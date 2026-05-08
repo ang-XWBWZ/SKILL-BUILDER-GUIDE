@@ -4,7 +4,14 @@
 
 - **执行者**: Sonnet (L1)
 - **输入**: Phase 1 技能规划 + Phase 2 扫描报告 + 匹配的模板
-- **输出**: `skills/{name}/SKILL.md` + `skills/{name}/agents/openai.yaml`
+- **输出**: 技能文件。默认输出到 `.claude/skills/{name}/`（自动加载），模板/参考技能输出到 `skills/{name}/`（不自动加载）
+
+### 输出路径选择
+
+| 目标 | 输出路径 | 说明 |
+|------|---------|------|
+| 生产项目专属技能 | `.claude/skills/{name}/` | 自动加载 + `/skill` 命令 |
+| 模板/参考技能 | `skills/{name}/` | 不自动加载，供方法论参考 |
 
 ## 生成 Prompt 模板
 

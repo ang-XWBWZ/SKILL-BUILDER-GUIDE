@@ -1,8 +1,9 @@
 ---
 name: example-dev
 description: >-
-  开发规范技能模板。用于指导创建项目专属的开发规范技能。
-  当询问技术栈、API规范、代码规范、编码风格、分层架构时触发。
+  Development Standards skill template. Guides creation of project-specific
+  development standards skills. Triggers on questions about tech stack, API
+  conventions, code standards, coding style, or layered architecture.
 model_tier: L1
 skill_tier: atomic
 composes: []
@@ -28,244 +29,244 @@ evolution:
   stale_markers: []
 ---
 
-# 开发规范技能模板
+# Development Standards Skill Template
 
-> **定位**: Atomic 层技能——提供技术栈、分层架构、命名规范的**信息查表**。被 [change-model](../change-model/SKILL.md) (functional)、[delegation](../delegation/SKILL.md) (planning)、[skill-builder-guide](../skill-builder-guide/SKILL.md) (meta) 编排调用。
+> **Positioning**: Atomic tier skill — provides an **information lookup table** for tech stack, layered architecture, and naming conventions. Orchestrated by [change-model](../change-model/SKILL.md) (functional), [delegation](../delegation/SKILL.md) (planning), and [skill-builder-guide](../skill-builder-guide/SKILL.md) (meta).
 >
-> **使用方式**: AI 扫描项目代码 → 提取各层标准写法 → 参照本模板结构 → 生成项目专属的开发规范技能。
+> **Usage**: AI scans project code → extracts standard patterns per layer → follows this template structure → generates a project-specific development standards skill.
 >
-> **深入参考**: 代码扫描详细方法见 [references/code-scanning-guide.md](references/code-scanning-guide.md)。
+> **Further reference**: See [references/code-scanning-guide.md](references/code-scanning-guide.md) for detailed code scanning methods.
 
-## 触发条件
+## Trigger Conditions
 
-- 创建开发规范技能 / 询问如何编写技术栈、代码规范
-- 询问编码风格、命名规范 / 代码分层规范指导
-- 需要标准写法识别方法 / 询问依赖版本
+- Create a development standards skill / ask how to write tech stack or code standards
+- Ask about coding style, naming conventions / layered code standard guidance
+- Need standard pattern recognition methods / ask about dependency versions
 
-## 关联技能
+## Related Skills
 
-- [代码地图](../example-code-map/SKILL.md) — 文件定位方法论 [L0]
-- [变更模型](../change-model/SKILL.md) — 变更报告生成
-- [分治驱动](../example-delegation/SKILL.md) — 模型分治规则
+- [Code Map](../example-code-map/SKILL.md) — file location methodology [L0]
+- [Change Model](../change-model/SKILL.md) — change report generation
+- [Delegation](../example-delegation/SKILL.md) — model tier delegation rules
 
 ---
 
-## 一、技术栈
+## 1. Tech Stack
 
-> AI 扫描项目依赖配置文件，提取实际使用的技术栈。
+> AI scans project dependency configuration files and extracts the actual tech stack in use.
 
-| 类别 | 技术 | 版本 | 说明 |
-|------|------|------|------|
-| 语言 | {语言} | {版本} | 运行时环境 |
-| 框架 | {框架} | {版本} | 核心框架 |
-| 数据库 | {数据库} | {版本} | 存储引擎 |
-| 缓存 | {缓存组件} | {版本} | 缓存中间件 |
-| 消息队列 | {MQ} | {版本} | 异步消息 |
+| Category | Technology | Version | Description |
+|----------|------------|---------|-------------|
+| Language | {language} | {version} | Runtime environment |
+| Framework | {framework} | {version} | Core framework |
+| Database | {database} | {version} | Storage engine |
+| Cache | {cache component} | {version} | Cache middleware |
+| Message Queue | {MQ} | {version} | Async messaging |
 
 ---
 
-## 二、代码分层规范
+## 2. Code Layering Standards
 
-### 2.1 分层架构（通用模型）
+### 2.1 Layered Architecture (General Model)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  接口层 (API/入口层)                                     │
-│  ├─ 请求参数校验与格式转换                                │
-│  ├─ 统一响应封装                                         │
-│  └─ 错误处理与异常转换                                   │
+│  Interface Layer (API / Entry Layer)                     │
+│  ├─ Request parameter validation & format conversion     │
+│  ├─ Unified response wrapper                             │
+│  └─ Error handling & exception translation               │
 ├─────────────────────────────────────────────────────────┤
-│  业务层 (业务逻辑层)                                     │
-│  ├─ 核心业务逻辑                                         │
-│  ├─ 事务/一致性管理                                       │
-│  ├─ 数据组装与转换                                       │
-│  └─ 外部服务编排                                         │
+│  Business Layer (Business Logic Layer)                   │
+│  ├─ Core business logic                                  │
+│  ├─ Transaction / consistency management                 │
+│  ├─ Data assembly & transformation                       │
+│  └─ External service orchestration                       │
 ├─────────────────────────────────────────────────────────┤
-│  数据层 (数据访问层)                                     │
-│  ├─ 持久化操作                                           │
-│  ├─ 查询构建                                             │
-│  └─ 缓存操作                                             │
+│  Data Layer (Data Access Layer)                          │
+│  ├─ Persistence operations                               │
+│  ├─ Query construction                                   │
+│  └─ Cache operations                                     │
 ├─────────────────────────────────────────────────────────┤
-│  集成层 (可选，按项目实际存在)                             │
-│  ├─ 远程服务调用                                         │
-│  ├─ 消息队列处理                                         │
-│  ├─ 定时任务                                             │
-│  └─ 第三方 SDK 封装                                      │
+│  Integration Layer (optional, per project reality)       │
+│  ├─ Remote service calls                                 │
+│  ├─ Message queue processing                             │
+│  ├─ Scheduled tasks                                      │
+│  └─ Third-party SDK wrappers                             │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 各层职责边界
+### 2.2 Layer Responsibility Boundaries
 
-| 层级 | 职责 | 禁止事项 |
-|------|------|----------|
-| **接口层** | 参数校验、格式转换、统一响应 | 业务逻辑、直接访问数据库 |
-| **业务层** | 业务逻辑、一致性管理、数据组装 | 直接处理请求/响应对象、拼接查询语句 |
-| **数据层** | 持久化操作、查询构建 | 业务逻辑判断 |
-| **集成层** | 跨服务调用、异步消息处理 | 核心业务逻辑实现 |
+| Layer | Responsibility | Prohibited |
+|-------|---------------|------------|
+| **Interface Layer** | Parameter validation, format conversion, unified response | Business logic, direct database access |
+| **Business Layer** | Business logic, consistency management, data assembly | Direct request/response handling, inline query strings |
+| **Data Layer** | Persistence operations, query construction | Business logic decisions |
+| **Integration Layer** | Cross-service calls, async message processing | Core business logic implementation |
 
-### 2.3 分层识别方法
+### 2.3 Layer Identification Method
 
-> AI 扫描项目文件后，记录实际分层情况。
+> AI scans project files and records the actual layering situation.
 
-| 识别项 | 记录格式 |
-|--------|----------|
-| 接口层目录 | `{目录名}` |
-| 接口层命名 | `{命名模式}` |
-| 业务层目录 | `{目录名}` |
-| 业务层命名 | `{命名模式}` |
-| 数据层目录 | `{目录名}` |
-| 数据层命名 | `{命名模式}` |
-| 集成层目录 | `{目录名}` |
-
----
-
-## 三、标准写法识别
-
-### 3.1 接口层标准写法
-
-| 检查项 | 扫描内容 | 记录格式 |
-|--------|----------|----------|
-| 路由声明 | 路由配置方式 | `{注解/配置文件/函数}` |
-| 参数校验 | 校验方式 | `{声明式/手动/中间件}` |
-| 响应封装 | 统一响应结构 | `{类名或函数名}` |
-| 错误处理 | 错误处理方式 | `{全局/局部}` |
-
-```
-接口层文件结构：
-声明路由和请求方法 → 依赖注入业务组件 → 各处理方法:
-    ├─ 参数校验
-    ├─ 调用业务层
-    └─ 返回统一响应格式
-```
-
-### 3.2 业务层标准写法
-
-| 检查项 | 扫描内容 | 记录格式 |
-|--------|----------|----------|
-| 接口定义 | 是否有抽象接口 | `{有/无}` |
-| 一致性管理 | 事务声明方式 | `{注解/手动/框架托管}` |
-| 参数转换 | 模型转换方式 | `{方式}` |
-| 外部调用 | 跨服务调用方式 | `{SDK/RPC/消息}` |
-
-```
-业务层文件结构：
-声明业务组件 → 各业务方法:
-    ├─ 参数转换为内部模型
-    ├─ 业务逻辑处理
-    ├─ 一致性边界声明
-    ├─ 调用数据层/集成层
-    └─ 返回结果模型
-```
-
-### 3.3 数据层标准写法
-
-| 检查项 | 扫描内容 | 记录格式 |
-|--------|----------|----------|
-| ORM方式 | 持久化方式 | `{ORM框架/原始查询/查询构造器}` |
-| 查询组织 | 查询存放方式 | `{注解/独立文件/内联}` |
-| 分页方式 | 分页策略 | `{插件/手动/框架内置}` |
-
-```
-数据层文件结构：
-声明数据访问组件 → 各数据方法:
-    ├─ 构建查询条件
-    ├─ 参数化查询（防注入）
-    ├─ 执行持久化操作
-    └─ 返回数据模型
-```
-
-### 3.4 集成层标准写法
-
-| 检查项 | 扫描内容 | 记录格式 |
-|--------|----------|----------|
-| 远程调用 | 服务间调用方式 | `{方式}` |
-| 容错机制 | 降级/熔断策略 | `{有/无}` |
-| 超时配置 | 超时时间 | `{默认值/自定义}` |
-| 消息组件 | 消息队列使用 | `{生产者/消费者/两者}` |
+| Identification Item | Record Format |
+|---------------------|---------------|
+| Interface layer directory | `{directory name}` |
+| Interface layer naming | `{naming pattern}` |
+| Business layer directory | `{directory name}` |
+| Business layer naming | `{naming pattern}` |
+| Data layer directory | `{directory name}` |
+| Data layer naming | `{naming pattern}` |
+| Integration layer directory | `{directory name}` |
 
 ---
 
-## 四、命名规范
+## 3. Standard Pattern Recognition
 
-### 4.1 文件命名
+### 3.1 Interface Layer Standard Patterns
 
-> AI 从项目中提取实际命名模式。
+| Check Item | Scan Target | Record Format |
+|------------|-------------|---------------|
+| Route declaration | Routing configuration method | `{annotation / config file / function}` |
+| Parameter validation | Validation approach | `{declarative / manual / middleware}` |
+| Response wrapper | Unified response structure | `{class name or function name}` |
+| Error handling | Error handling approach | `{global / local}` |
 
-| 类型 | 命名模式 | 示例 |
-|------|----------|------|
-| 接口层文件 | `{模式}` | `{示例}` |
-| 业务层文件 | `{模式}` | `{示例}` |
-| 数据层文件 | `{模式}` | `{示例}` |
-| 数据模型文件 | `{模式}` | `{示例}` |
+```
+Interface layer file structure:
+Declare route & HTTP method → dependency-inject business components → each handler method:
+    ├─ Parameter validation
+    ├─ Call business layer
+    └─ Return unified response format
+```
 
-### 4.2 方法命名
+### 3.2 Business Layer Standard Patterns
 
-| 操作类型 | 命名模式 | 示例 |
-|----------|----------|------|
-| 单条查询 | `{前缀}` + `{条件}` | `{示例}` |
-| 列表查询 | `{前缀}` + `{条件}` | `{示例}` |
-| 分页查询 | `{前缀}` + `{条件}` | `{示例}` |
-| 新增 | `{前缀}` + `{目标}` | `{示例}` |
-| 修改 | `{前缀}` + `{目标}` | `{示例}` |
-| 删除 | `{前缀}` + `{目标}` | `{示例}` |
+| Check Item | Scan Target | Record Format |
+|------------|-------------|---------------|
+| Interface definition | Whether abstract interface exists | `{yes / no}` |
+| Consistency management | Transaction declaration method | `{annotation / manual / framework-managed}` |
+| Parameter transformation | Model conversion approach | `{method}` |
+| External calls | Cross-service call method | `{SDK / RPC / message}` |
 
-### 4.3 变量命名
+```
+Business layer file structure:
+Declare business component → each business method:
+    ├─ Transform parameters to internal model
+    ├─ Business logic processing
+    ├─ Consistency boundary declaration
+    ├─ Call data layer / integration layer
+    └─ Return result model
+```
 
-| 类型 | 命名规则 |
-|------|----------|
-| 常量 | 全大写下划线 / 驼峰大写 |
-| 成员变量 | 驼峰 / 下划线前缀 |
-| 局部变量 | 语义明确 |
-| 布尔变量 | is/has/can 前缀 |
+### 3.3 Data Layer Standard Patterns
+
+| Check Item | Scan Target | Record Format |
+|------------|-------------|---------------|
+| ORM method | Persistence approach | `{ORM framework / raw queries / query builder}` |
+| Query organization | Query storage method | `{annotation / separate file / inline}` |
+| Pagination method | Pagination strategy | `{plugin / manual / framework built-in}` |
+
+```
+Data layer file structure:
+Declare data access component → each data method:
+    ├─ Build query conditions
+    ├─ Parameterized query (injection prevention)
+    ├─ Execute persistence operation
+    └─ Return data model
+```
+
+### 3.4 Integration Layer Standard Patterns
+
+| Check Item | Scan Target | Record Format |
+|------------|-------------|---------------|
+| Remote calls | Inter-service call method | `{method}` |
+| Fault tolerance | Degradation / circuit-breaking strategy | `{yes / no}` |
+| Timeout config | Timeout duration | `{default / custom}` |
+| Message component | Message queue usage | `{producer / consumer / both}` |
 
 ---
 
-## 五、兼容写法识别
+## 4. Naming Conventions
 
-### 5.1 什么需要记录
+### 4.1 File Naming
 
-> AI 扫描代码时，识别与主流写法不同但因历史原因保留的写法。
+> AI extracts actual naming patterns from the project.
 
-| 场景 | 示例 | 记录说明 |
-|------|------|----------|
-| 遗留格式 | 老接口返回格式与新接口不同 | 保留，标注适用范围 |
-| 特殊优化 | 特定场景的高性能处理 | 保留，记录原因 |
-| 业务特例 | 某个模块的独特事务处理 | 保留，标注适用条件 |
+| Type | Naming Pattern | Example |
+|------|---------------|---------|
+| Interface layer files | `{pattern}` | `{example}` |
+| Business layer files | `{pattern}` | `{example}` |
+| Data layer files | `{pattern}` | `{example}` |
+| Data model files | `{pattern}` | `{example}` |
 
-详见 [references/code-scanning-guide.md](references/code-scanning-guide.md)。
+### 4.2 Method Naming
 
----
+| Operation Type | Naming Pattern | Example |
+|---------------|---------------|---------|
+| Single query | `{prefix}` + `{condition}` | `{example}` |
+| List query | `{prefix}` + `{condition}` | `{example}` |
+| Paginated query | `{prefix}` + `{condition}` | `{example}` |
+| Create | `{prefix}` + `{target}` | `{example}` |
+| Update | `{prefix}` + `{target}` | `{example}` |
+| Delete | `{prefix}` + `{target}` | `{example}` |
 
-## 六、编码风格形成流程
+### 4.3 Variable Naming
 
-```
-① 项目分析 → ② 代码扫描 (派 Haiku — L0) → ③ 风格提取
-    → ④ 文档生成 → ⑤ 用户确认
-```
-
-**AI 执行步骤**：
-1. 分析项目类型和技术栈
-2. 派 Haiku 扫描各层代码样本（L0 任务）
-3. 提取标准写法和兼容写法
-4. 按本模板结构填充项目实际内容
-5. 生成项目专属的开发规范 SKILL.md
-6. 用户确认或提供文档调整
-
-### 6.1 用户文档合并
-
-如果用户提供编码规范文档，**以用户文档为准**：
-
-```
-1. 读取用户提供的编码规范文档
-2. 与扫描结果对比差异
-3. 以用户文档为准，补充扫描发现的实际情况
-4. 记录差异项，供用户确认
-```
-
-详见 [references/code-scanning-guide.md](references/code-scanning-guide.md)。
+| Type | Naming Rule |
+|------|-------------|
+| Constants | ALL_CAPS_UNDERSCORE / PascalCase |
+| Member variables | camelCase / underscore-prefixed |
+| Local variables | Semantically clear |
+| Boolean variables | is / has / can prefix |
 
 ---
 
-## 七、模型等级
+## 5. Compatibility Pattern Recognition
 
-**L1 — Sonnet / atomic tier**：含规范理解、代码分析、风格提取等推理工作。扫描子任务派 L0 — Haiku。
+### 5.1 What to Record
+
+> When scanning code, AI identifies patterns that differ from mainstream conventions but are preserved for historical reasons.
+
+| Scenario | Example | Record Notes |
+|----------|---------|--------------|
+| Legacy format | Old API response format differs from new API | Preserve, annotate applicable scope |
+| Special optimization | High-performance handling for specific scenarios | Preserve, record the reason |
+| Business exception | Unique transaction handling in a certain module | Preserve, annotate applicable conditions |
+
+See [references/code-scanning-guide.md](references/code-scanning-guide.md).
+
+---
+
+## 6. Coding Style Formation Process
+
+```
+① Project analysis → ② Code scanning (dispatch Haiku — L0) → ③ Style extraction
+    → ④ Document generation → ⑤ User confirmation
+```
+
+**AI execution steps**:
+1. Analyze project type and tech stack
+2. Dispatch Haiku to scan code samples per layer (L0 task)
+3. Extract standard patterns and compatibility patterns
+4. Populate project-specific content following this template structure
+5. Generate a project-specific development standards SKILL.md
+6. User confirms or provides document adjustments
+
+### 6.1 User Document Integration
+
+If the user provides coding standard documents, **follow the user's documents**:
+
+```
+1. Read the coding standard documents provided by the user
+2. Compare differences against scan results
+3. Follow user documents as the authority, supplement with scan-discovered realities
+4. Record discrepancies for user confirmation
+```
+
+See [references/code-scanning-guide.md](references/code-scanning-guide.md).
+
+---
+
+## 7. Model Tier
+
+**L1 — Sonnet / atomic tier**: Contains reasoning work such as standard interpretation, code analysis, and style extraction. Scan subtasks are dispatched to L0 — Haiku.

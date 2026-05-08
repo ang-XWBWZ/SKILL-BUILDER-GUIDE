@@ -1,10 +1,10 @@
 ---
 name: change-model
 description: >-
-  Change Model 技能模板。将代码变更转化为结构化变更报告
-  （WHY/WHAT/HOW/VALIDATION 四层架构），含调用链检查、存档归档、
-  Git 自动分析。当需要生成变更报告、DiffLog、Release Notes、
-  归档变更记录时触发。
+  Change Model skill template. Transforms code changes into structured change reports
+  (WHY/WHAT/HOW/VALIDATION four-layer architecture), with call-chain checking, archival storage,
+  and automatic Git analysis. Triggered when generating change reports, DiffLogs, Release Notes,
+  or archiving change records.
 model_tier: L1
 skill_tier: functional
 composes:
@@ -31,327 +31,327 @@ evolution:
   stale_markers: []
 ---
 
-# Change Model — 变更模型技能模板
+# Change Model — Change Model Skill Template
 
-> **定位**: Functional 层技能——提供结构化的变更报告方法论（WHY/WHAT/HOW/VALIDATION），指导从需求分析到归档存档的完整流程。
+> **Positioning**: Functional tier skill — provides a structured change-report methodology (WHY/WHAT/HOW/VALIDATION), guiding the full workflow from requirements analysis through archival storage.
 >
-> **组合关系**: 本技能编排 [code-map](../example-code-map/SKILL.md) (L0 文件定位) 和 [dev](../example-dev/SKILL.md) (L1 规范查询)。被 [delegation](../delegation/SKILL.md) (planning 层) 编排。
+> **Composition**: This skill orchestrates [code-map](../example-code-map/SKILL.md) (L0 file location) and [dev](../example-dev/SKILL.md) (L1 spec lookup). It is orchestrated by [delegation](../delegation/SKILL.md) (planning tier).
 >
-> **深入参考**: 存档体系设计见 [references/archive-design.md](references/archive-design.md)；存档工作流见 [references/archive-workflow.md](references/archive-workflow.md)；Git 自动分析见 [references/git-analysis.md](references/git-analysis.md)。
+> **Deep References**: See [references/archive-design.md](references/archive-design.md) for the archival system design; [references/archive-workflow.md](references/archive-workflow.md) for the archival workflow; [references/git-analysis.md](references/git-analysis.md) for automatic Git analysis.
 
-## 触发条件
+## Trigger Conditions
 
-- 生成变更报告 / DiffLog / Release Notes
-- 从 Git 历史分析变更 / 从提交生成报告
-- 归档变更记录 / 变更存档 / 历史变更查询
-- 询问"怎么写变更报告" / "怎么归档变更"
-- 创建项目专属变更报告技能
-- 需要调用链检查方法论
+- Generate change report / DiffLog / Release Notes
+- Analyze changes from Git history / generate report from commits
+- Archive change records / change archive / historical change query
+- User asks "how to write a change report" / "how to archive changes"
+- Create project-specific change-report skills
+- Need call-chain checking methodology
 
-## 关联技能
+## Related Skills
 
-- [技能构建指南](../skill-builder-guide/SKILL.md) — meta 层技能创建
-- [开发规范](../example-dev/SKILL.md) — atomic 层技术栈信息
-- [代码地图](../example-code-map/SKILL.md) — atomic 层文件定位 [L0]
-- 参考实现脚本见 `scripts/` 目录
+- [Skill Builder Guide](../skill-builder-guide/SKILL.md) — meta tier skill creation
+- [Dev Specs](../example-dev/SKILL.md) — atomic tier tech stack info
+- [Code Map](../example-code-map/SKILL.md) — atomic tier file location [L0]
+- Reference implementation scripts in `scripts/` directory
 
 ---
 
-## 一、技能概述
+## 1. Skill Overview
 
-### 1.1 什么是 Change Model
+### 1.1 What Is Change Model
 
-Change Model 将原始代码 diff 转化为四层结构化文档：
+Change Model transforms raw code diffs into a four-layer structured document:
 
 ```
 ┌─────────────────────────────────────┐
-│  第一层：WHY — 变更背景与需求         │
-│  ├─ 1. 变更背景                      │
-│  └─ 2. 需求分析                      │
+│  Layer 1: WHY — Change Context & Requirements   │
+│  ├─ 1. Change Background                        │
+│  └─ 2. Requirements Analysis                    │
 ├─────────────────────────────────────┤
-│  第二层：WHAT — 影响与风险           │
-│  ├─ 3. 影响分析                      │
-│  └─ 4. 风险评估                      │
+│  Layer 2: WHAT — Impact & Risk                 │
+│  ├─ 3. Impact Analysis                          │
+│  └─ 4. Risk Assessment                          │
 ├─────────────────────────────────────┤
-│  第三层：HOW — 设计与实现            │
-│  ├─ 5. 设计方案                      │
-│  └─ 6. 实现映射                      │
+│  Layer 3: HOW — Design & Implementation        │
+│  ├─ 5. Design Approach                          │
+│  └─ 6. Implementation Mapping                   │
 ├─────────────────────────────────────┤
-│  第四层：VALIDATION — 验证与交付     │
-│  ├─ 7. 调用链检查（测试前）          │
-│  ├─ 8. 测试验证                      │
-│  └─ 9. 交付与回滚                    │
+│  Layer 4: VALIDATION — Verification & Delivery  │
+│  ├─ 7. Call-Chain Check (pre-test)              │
+│  ├─ 8. Test Verification                        │
+│  └─ 9. Delivery & Rollback                      │
 └─────────────────────────────────────┘
 ```
 
-### 1.2 解决的问题
+### 1.2 Problems Solved
 
-| 问题 | Change Model 方案 |
+| Problem | Change Model Solution |
 |------|-------------------|
-| Diff 碎片化 | 按因果链组织，而非按文件罗列 |
-| 缺乏行为抽象 | 明确"条件 → 结果"的判断逻辑 |
-| 新人理解困难 | 四层结构：背景 → 需求 → 设计 → 验证 |
-| AI 无法推断意图 | 结构化、机器可读的章节设计 |
-| 变更无法追溯 | 存档体系：按日期归档 + INDEX.md 索引 |
-| 历史报告缺失 | Git 分析：从提交历史自动生成报告骨架 |
+| Diff fragmentation | Organize by causal chain, not by file listing |
+| Lack of behavioral abstraction | Make "condition → result" decision logic explicit |
+| Hard for newcomers to understand | Four-layer structure: background → requirements → design → verification |
+| AI cannot infer intent | Structured, machine-readable section design |
+| Changes cannot be traced | Archival system: date-based archiving + INDEX.md index |
+| Missing historical reports | Git analysis: auto-generate report skeleton from commit history |
 
-### 1.3 与变更日志技能的区分
+### 1.3 Distinction from Changelog Skills
 
-| 维度 | 变更模型 (change-model) | 变更日志 (diffs) |
+| Dimension | Change Model (change-model) | Changelog (diffs) |
 |------|------------------------|-------------------|
-| **视角** | 前瞻：变更发生前设计 | 回溯：变更发生后记录 |
-| **粒度** | 每次需求/任务一个报告 | 每次提交/PR一条记录 |
-| **内容** | WHY→WHAT→HOW→VALIDATION 完整因果链 | 改了什么、为什么改 |
-| **时效** | 编码前完成设计，测试前完成验证 | 提交后自动/手动记录 |
-| **用途** | 指导开发、风险控制 | 历史追踪、复盘审计 |
+| **Perspective** | Forward-looking: designed before changes occur | Retrospective: recorded after changes occur |
+| **Granularity** | One report per requirement/task | One entry per commit/PR |
+| **Content** | WHY→WHAT→HOW→VALIDATION complete causal chain | What changed, why it changed |
+| **Timing** | Complete design before coding, complete verification before testing | Auto/manual recording after commit |
+| **Purpose** | Guide development, risk control | History tracking, retrospective audit |
 
 ---
 
-## 二、第一层：WHY — 变更背景与需求
+## 2. Layer 1: WHY — Change Context & Requirements
 
-### 2.1 变更背景
+### 2.1 Change Background
 
 ```markdown
-| 要素 | 说明 |
+| Element | Description |
 |------|------|
-| **需求来源** | {需求方/工单号} |
-| **触发原因** | {为什么需要这次变更} |
-| **期望目标** | {变更后达到什么效果} |
+| **Requirement Source** | {requester/ticket number} |
+| **Trigger Reason** | {why this change is needed} |
+| **Desired Goal** | {what effect the change should achieve} |
 ```
 
-**填写要点**：来源具体可追溯 / 原因说清"问题是什么" / 目标可验证。
+**Fill-in Guidelines**: Source must be specific and traceable / Reason must clarify "what the problem is" / Goal must be verifiable.
 
-### 2.2 需求分析
+### 2.2 Requirements Analysis
 
 ```
-输入: {入参}
+Input: {input params}
 
-判断条件:
-- {条件1} → {结果1}
-- {条件2} → {结果2}
+Judgment conditions:
+- {condition 1} → {result 1}
+- {condition 2} → {result 2}
 
-输出: {出参}
+Output: {output params}
 ```
 
-**填写要点**：使用"条件 → 结果"格式 / 覆盖所有业务分支 / 明确输入输出。
+**Fill-in Guidelines**: Use "condition → result" format / Cover all business branches / Specify inputs and outputs explicitly.
 
 ---
 
-## 三、第二层：WHAT — 影响与风险
+## 3. Layer 2: WHAT — Impact & Risk
 
-### 3.1 影响分析
+### 3.1 Impact Analysis
 
 ```markdown
-| 维度 | 影响说明 | 影响程度 |
+| Dimension | Impact Description | Impact Level |
 |------|----------|:--------:|
-| **上游调用方** | {说明} | 无/低/中/高 |
-| **下游依赖** | {说明} | 无/低/中/高 |
-| **数据库** | {涉及表} | — |
+| **Upstream Callers** | {description} | None/Low/Med/High |
+| **Downstream Dependencies** | {description} | None/Low/Med/High |
+| **Database** | {tables involved} | — |
 ```
 
-### 3.2 风险评估
+### 3.2 Risk Assessment
 
 ```markdown
-| 风险项 | 级别 | 说明 | 缓解措施 |
+| Risk Item | Level | Description | Mitigation |
 |--------|:----:|------|----------|
-| {风险名} | L0/L1/L2/L3 | {说明} | {措施} |
+| {risk name} | L0/L1/L2/L3 | {description} | {mitigation} |
 ```
 
-**风险等级定义**：
+**Risk Level Definitions**:
 
-| 等级 | 定义 | 示例 |
+| Level | Definition | Example |
 |:----:|------|------|
-| L0 | 无外部影响 | 内部重构、日志优化 |
-| L1 | 内部API变更 | 新增可选参数、内部接口调整 |
-| L2 | 外部契约变更 | 接口签名变更、返回格式变更 |
-| L3 | 数据/状态迁移 | 数据库迁移、配置变更 |
+| L0 | No external impact | Internal refactor, log optimization |
+| L1 | Internal API change | New optional parameter, internal interface adjustment |
+| L2 | External contract change | Interface signature change, response format change |
+| L3 | Data/state migration | Database migration, config change |
 
 ---
 
-## 四、第三层：HOW — 设计与实现
+## 4. Layer 3: HOW — Design & Implementation
 
-### 4.1 调用链路
+### 4.1 Call Chain
 
 ```
-{调用方}
-  │ {请求方式} {接口路径}
+{Caller}
+  │ {Request method} {endpoint path}
   ▼
-接口层 ({入口组件})
-  │ {业务层方法}
+Interface Layer ({entry component})
+  │ {business layer method}
   ▼
-业务层 ({业务组件})
-  │ {业务逻辑说明}
+Business Layer ({business component})
+  │ {business logic description}
   ▼
-数据层 ({数据组件})
-  │ {查询/持久化说明}
+Data Layer ({data component})
+  │ {query/persistence description}
   ▼
-数据库
+Database
 ```
 
-### 4.2 实现映射
+### 4.2 Implementation Mapping
 
 ```markdown
-#### 变更文件清单
+#### Changed File List
 
-| 序号 | 操作 | 文件路径 | 变更说明 |
+| # | Operation | File Path | Change Description |
 |:----:|:----:|----------|----------|
-| 1 | ⭐/✏️ | `{路径}` | {说明} |
+| 1 | ⭐/✏️ | `{path}` | {description} |
 ```
 
 ---
 
-## 五、调用链检查方法论
+## 5. Call-Chain Checking Methodology
 
-### 5.1 核心目标
+### 5.1 Core Objectives
 
-| 目标 | 说明 |
+| Objective | Description |
 |------|------|
-| 链路完整 | 从入口到终点无断裂 |
-| 类型匹配 | 数据类型在每个环节正确传递 |
-| 最终调用 | SQL/接口/消息等最终操作正确 |
+| Chain completeness | No breaks from entry point to endpoint |
+| Type matching | Data types correctly passed at each link |
+| Final call | SQL/API/message etc. final operation is correct |
 
-### 5.2 检查流程
+### 5.2 Checking Procedure
 
 ```
-Step 1: 确定入口点
-  ├─ API 接口 / 页面事件 / 定时任务 / 消息消费
-  └─ 记录入参类型和校验规则
+Step 1: Identify the entry point
+  ├─ API endpoint / page event / scheduled task / message consumption
+  └─ Record input parameter types and validation rules
 
-Step 2: 追踪中间环节
-  ├─ 接口层 → 业务层 → 数据层
-  ├─ 记录每个环节的方法签名和返回类型
-  └─ 检查类型是否匹配
+Step 2: Trace intermediate links
+  ├─ Interface layer → Business layer → Data layer
+  ├─ Record method signatures and return types at each link
+  └─ Check whether types match
 
-Step 3: 验证最终调用
-  ├─ SQL 语句 / 外部接口 / 消息队列 / 缓存写入
-  └─ 检查参数是否正确传递
+Step 3: Verify the final call
+  ├─ SQL statement / external API / message queue / cache write
+  └─ Check whether parameters are passed correctly
 
-Step 4: 错误处理检查
-  ├─ 异常是否被捕获
-  └─ 错误是否正确返回
+Step 4: Error handling check
+  ├─ Are exceptions caught?
+  └─ Are errors returned correctly?
 ```
 
-### 5.3 检查项清单
+### 5.3 Checklist
 
-| # | 检查项 | 检查内容 | 验证方法 |
+| # | Check Item | What to Check | Verification Method |
 |:-:|--------|----------|----------|
-| 1 | 入口参数 | 参数类型、必填校验 | 查看接口定义 |
-| 2 | 参数传递 | 参数在各层是否正确传递 | 追踪方法调用链 |
-| 3 | 类型匹配 | 每层入参/出参类型是否匹配 | 对比类型定义 |
-| 4 | 空值处理 | 可选字段是否有默认值 | 检查代码逻辑 |
-| 5 | 最终调用 | SQL/接口/消息参数是否正确 | 检查最终实现 |
-| 6 | 返回处理 | 返回值是否正确组装 | 检查返回路径 |
-| 7 | 异常处理 | 异常是否被捕获 | 检查 try-catch |
-| 8 | 降级逻辑 | 失败时是否有降级方案 | 检查 fallback |
+| 1 | Entry parameters | Parameter types, required-field validation | Inspect interface definition |
+| 2 | Parameter passing | Are parameters passed correctly across layers? | Trace the method call chain |
+| 3 | Type matching | Do input/output types match at each layer? | Compare type definitions |
+| 4 | Null handling | Do optional fields have default values? | Inspect code logic |
+| 5 | Final call | Are SQL/API/message parameters correct? | Inspect final implementation |
+| 6 | Return handling | Is the return value assembled correctly? | Inspect return path |
+| 7 | Exception handling | Are exceptions caught? | Inspect try-catch |
+| 8 | Degradation logic | Is there a fallback on failure? | Inspect fallback |
 
-### 5.4 检查时机
+### 5.4 When to Check
 
-| 阶段 | 是否执行 | 说明 |
+| Phase | Execute? | Notes |
 |------|:--------:|------|
-| 需求分析后 | ❌ | 尚未实现 |
-| 编码完成后 | ✅ | **必须执行** |
-| 测试前 | ✅ | 确保链路正确再测试 |
-| 上线前 | ✅ | 最终验证 |
+| After requirements analysis | ❌ | Not yet implemented |
+| After coding | ✅ | **Must execute** |
+| Before testing | ✅ | Ensure chain is correct before testing |
+| Before launch | ✅ | Final verification |
 
-### 5.5 调用链检查模板
+### 5.5 Call-Chain Check Template
 
 ```markdown
-### 7. 调用链检查
+### 7. Call-Chain Check
 
-| 检查项 | 状态 | 说明 |
+| Check Item | Status | Notes |
 |--------|:----:|------|
-| 入口验证 | ✅/❌ | 参数校验正确 |
-| 类型检查 | ✅/❌ | 数据类型匹配 |
-| 最终调用 | ✅/❌ | SQL/接口调用正确 |
+| Entry validation | ✅/❌ | Parameter validation correct |
+| Type check | ✅/❌ | Data types match |
+| Final call | ✅/❌ | SQL/API call correct |
 
-**数据流验证**：
-{入口}
-  → {中间环节1}
-  → {中间环节2}
-  → {最终调用}
+**Data Flow Verification**:
+{Entry}
+  → {Intermediate link 1}
+  → {Intermediate link 2}
+  → {Final call}
 ```
 
-**通过条件**：所有检查项为 ✅。
+**Pass Condition**: All check items must be ✅.
 
 ---
 
-## 六、生成专属技能指南
+## 6. Generating a Project-Specific Skill
 
-### 6.1 定制项
+### 6.1 Customization Items
 
-| 定制项 | 说明 |
+| Customization | Description |
 |--------|------|
-| 章节增减 | 根据项目需要增删章节 |
-| 风险等级 | 调整 L0-L3 定义适配项目 |
-| 模板格式 | Markdown / JSON / YAML |
-| 触发词 | 项目特有的变更相关词汇 |
+| Section add/remove | Add or remove sections as needed for the project |
+| Risk levels | Adjust L0-L3 definitions to fit the project |
+| Template format | Markdown / JSON / YAML |
+| Trigger words | Project-specific change-related vocabulary |
 
-### 6.2 用户文档合并
+### 6.2 Merging User Documentation
 
-如果用户提供现有变更报告模板或规范文档，**以用户文档为准**：
+If the user provides an existing change report template or spec document, **the user's document takes precedence**:
 
 ```
-1. 读取用户提供的变更报告模板/规范
-2. 与本文本模板对比差异
-3. 以用户文档为准，用本文本方法论补充缺失部分
-4. 记录差异项，供用户确认
+1. Read the change report template/spec provided by the user
+2. Compare differences with this text template
+3. Use the user's document as the baseline; supplement missing parts with this methodology
+4. Record differences for user confirmation
 ```
 
-| 差异类型 | 处理方式 |
+| Difference Type | Handling |
 |----------|----------|
-| 用户模板有独有章节 | 保留用户章节，标注为项目定制 |
-| 用户模板缺失某层 | 提示补充（如缺失 VALIDATION） |
-| 用户风险等级定义不同 | 以用户定义为准 |
-| 用户使用不同术语 | 保留用户术语 |
+| User template has unique sections | Keep user sections, mark as project customization |
+| User template is missing a layer | Suggest adding it (e.g., missing VALIDATION) |
+| User has different risk level definitions | Use user's definitions |
+| User uses different terminology | Keep user's terminology |
 
 ---
 
-## 七、存档体系
+## 7. Archival System
 
-### 7.1 主流程
+### 7.1 Main Flow
 
 ```
-编码完成 → 调用链检查 → 测试验证 → 生成最终报告 → 📦 归档
+Coding complete → Call-chain check → Test verification → Generate final report → 📦 Archive
 ```
 
-### 7.2 目录结构
+### 7.2 Directory Structure
 
 ```
 docs/changes/
-├── INDEX.md              # 总索引（按时间 / 按类型双维度）
+├── INDEX.md              # Master index (dual-dimension: by time / by type)
 ├── 2026-04-26/
-│   ├── 20260426-01-新增筛选功能.md
-│   └── 20260426-02-修复登录超时.md
+│   ├── 20260426-01-add-filter-feature.md
+│   └── 20260426-02-fix-login-timeout.md
 └── 2026-04-27/
-    └── 20260427-01-重构支付模块.md
+    └── 20260427-01-refactor-payment-module.md
 ```
 
-### 7.3 存档校验清单
+### 7.3 Archive Validation Checklist
 
-- [ ] 报告包含完整四层结构（WHY / WHAT / HOW / VALIDATION）
-- [ ] 调用链检查所有项目为 ✅
-- [ ] 涉及的文件路径已与实际代码核对
-- [ ] 回滚方案明确可执行
-- [ ] 无敏感信息
+- [ ] Report includes complete four-layer structure (WHY / WHAT / HOW / VALIDATION)
+- [ ] All call-chain check items are ✅
+- [ ] Referenced file paths have been verified against actual code
+- [ ] Rollback plan is explicit and executable
+- [ ] No sensitive information
 
-### 7.4 参考脚本
+### 7.4 Reference Scripts
 
 ```bash
-# Git 历史分析 → 生成报告骨架
+# Git history analysis → generate report skeleton
 python skills/change-model/scripts/generate-git-report.py \
-  --range "HEAD~3..HEAD" --title "新增筛选功能" --type feature --archive
+  --range "HEAD~3..HEAD" --title "Add filter feature" --type feature --archive
 
-# 手动报告归档
+# Manual report archival
 python skills/change-model/scripts/archive-report.py \
-  path/to/report.md --title "新增筛选功能" --type feature --scope api
+  path/to/report.md --title "Add filter feature" --type feature --scope api
 ```
 
-**存档设计详见** [references/archive-design.md](references/archive-design.md)。
-**存档工作流详见** [references/archive-workflow.md](references/archive-workflow.md)。
-**Git 自动分析详见** [references/git-analysis.md](references/git-analysis.md)。
+**See** [references/archive-design.md](references/archive-design.md) **for archive system design**.
+**See** [references/archive-workflow.md](references/archive-workflow.md) **for archive workflow**.
+**See** [references/git-analysis.md](references/git-analysis.md) **for Git automatic analysis**.
 
 ---
 
-## 八、模型等级
+## 8. Model Tier
 
-**L1 — Sonnet / functional tier**：需理解变更语义、组织因果链、生成结构化文档。文件查找派 L0 — Haiku。
+**L1 — Sonnet / functional tier**: Requires understanding change semantics, organizing causal chains, and generating structured documents. File lookups are delegated to L0 — Haiku.

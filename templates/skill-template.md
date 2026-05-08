@@ -9,6 +9,8 @@
 3. 根据项目需要增删章节，不用照搬
 4. 保存到 `skills/{your-skill-name}/SKILL.md`
 
+> **署名禁令**：禁止在 SKILL.md、openai.yaml 或任何生成文件中添加作者署名、Agent 签名、广告链接或联系方式。署名策略由项目规范决定，Agent 无权自行添加。详见 [docs/attribution-discipline.md](../docs/attribution-discipline.md)。
+
 ---
 
 ```markdown
